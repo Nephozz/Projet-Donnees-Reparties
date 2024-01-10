@@ -20,5 +20,28 @@ public class HdfsClient {
 	public static void main(String[] args) {
 		// java HdfsClient <read|write> <txt|kv> <file>
 		// appel des méthodes précédentes depuis la ligne de commande
+		if (args.length < 2) {
+            usage();
+            System.exit(1);
+        }
+
+        String operation = args[0];
+        String fileName = args[args.length - 1];
+
+		switch (operation) {
+            case "read":
+                HdfsRead(fileName);
+                break;
+            case "write":
+				// à modif si kv ou text traiter les options
+                HdfsWrite(arg[1], fileName);
+                break;
+            case "delete":
+                HdfsDelete(fileName);
+                break;
+            default:
+                usage();
+                System.exit(1);
+        }
 	}
 }
