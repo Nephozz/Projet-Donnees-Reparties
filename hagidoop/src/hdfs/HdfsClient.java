@@ -34,8 +34,15 @@ public class HdfsClient {
                 break;
             case "write":
 				// à modif si kv ou text traiter les options
-                Integer fmt = Integer.parseInt(args[1]);
-                HdfsWrite(fmt, fileName);
+                String option = args[1];
+                if (option == "txt") {
+                    HdfsWrite(0, fileName);
+                } else if (option == "kv") {
+                    HdfsWrite(1, fileName);
+                } else {
+                    usage();
+                    System.exit(1);
+                }
                 break;
             case "delete":
                 HdfsDelete(fileName);
