@@ -1,6 +1,14 @@
 package hdfs;
 
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+
 public class HdfsClient {
+    public enum FMT {
+        TXT,
+        KV
+    }
 	
 	private static void usage() {
 		System.out.println("Usage: java HdfsClient read <file>");
@@ -9,12 +17,34 @@ public class HdfsClient {
 	}
 	
 	public static void HdfsDelete(String fname) {
+        Socket socket = new Socket(serverAddress, serverPort);
+        ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+        ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
 	}
 	
-	public static void HdfsWrite(int fmt, String fname) {
+	public static void HdfsWrite(FMT fmt, String fname) {
+        Socket socket = new Socket(serverAddress, serverPort);
+        ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+        ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+        
+        switch (fmt) {
+            case TXT:
+                // write txt
+                break;
+            case KV:
+                // write kv
+                break;
+            default:
+                usage();
+                System.exit(1);
+        }
 	}
 
 	public static void HdfsRead(String fname) {
+        Socket socket = new Socket(serverAddress, serverPort);
+        ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+        ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream())
+
 	}
 
 	public static void main(String[] args) {
@@ -36,9 +66,9 @@ public class HdfsClient {
 				// à modif si kv ou text traiter les options
                 String option = args[1];
                 if (option == "txt") {
-                    HdfsWrite(0, fileName);
+                    HdfsWrite(FMT.TXT, fileName);
                 } else if (option == "kv") {
-                    HdfsWrite(1, fileName);
+                    HdfsWrite(FMT.KV, fileName);
                 } else {
                     usage();
                     System.exit(1);

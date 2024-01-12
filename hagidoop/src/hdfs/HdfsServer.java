@@ -8,17 +8,20 @@ public class HdfsServer implements Runnable {
 	
     private Socket client;
     private int id;
+    private int port;
 
-    private HdfsServer(Socket s) {
+    private HdfsServer(Socket s, int port) {
         this.client = s;
+        this.port = port;
     }
 	
-    public static void main (String args []) {
+    public static void main (String args[]) {
 		try {
-			ServerSocket ss = new ServerSocket(8080);
+			ServerSocket serverSocket = new ServerSocket(8080);
             while (true) {
-                Socket client = ss.accept();
-                new Thread(new HdfsServer(client)).start();
+                Socket client = serverSocket.accept();
+                System.out.println("Accepted connection from " + client.getInetAddress());
+                new Thread(new HdfsServer(client,port)).start();
             }
 		} catch (IOException ex) {
 			ex.printStackTrace();
@@ -27,14 +30,12 @@ public class HdfsServer implements Runnable {
 
     public void run () {
 		try {
-            Socket s = this.client;
+            Socket clienSocket = this.client;
 
-			InputStream in = s.getInputStream();
-			OutputStream out = s.getOutputStream();
-            ObjectInputStream oin = new ObjectInputStream(in);
-            ObjectOutputStream oout = new ObjectOutputStream(out);
+            ObjectInputStream inputStream = new ObjectInputStream(clienSocket.getInputStream());
+            ObjectOutputStream outputStream = new ObjectOutputStream(clienSocket.getOutputStream());
 
-            Integer[] tab = (Integer[]) oin.readObject();
+            Integer[] tab = (Integer[]) inputStream.readObject();
 
             this.id = tab[0];
             int request = tab[1];
@@ -51,11 +52,9 @@ public class HdfsServer implements Runnable {
                 
             }
 
-            s.close();
-            in.close();
-            out.close();
-            oin.close();
-            oout.close();
+            clienSocket.close();
+            inputStream.close();
+            outputStream.close();
 		} catch (IOException | ClassNotFoundException ex) {
             ex.printStackTrace();
         }
