@@ -4,7 +4,9 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class HdfsServer implements Runnable {
+//rajouter des méthodes read, write, delete
+
+public class HdfsServer {
 	
     private Socket client;
     private int id;
@@ -17,25 +19,26 @@ public class HdfsServer implements Runnable {
 	
     public static void main (String args[]) {
 		try {
-			ServerSocket serverSocket = new ServerSocket(8080);
-            while (true) {
-                Socket client = serverSocket.accept();
-                System.out.println("Accepted connection from " + client.getInetAddress());
-                
-                Socket clienSocket = this.client;
-
-                ObjectInputStream inputStream = new ObjectInputStream(clienSocket.getInputStream());
-                ObjectOutputStream outputStream = new ObjectOutputStream(clienSocket.getOutputStream());
-
-                Integer[] tab = (Integer[]) inputStream.readObject();
-
-                this.id = tab[0];
-                int request = tab[1];
-                }
+			ServerSocket ss = new ServerSocket(8080);
+		    while (true) {
+			    Socket cs = ss.accept();
+                ThreadServer thread = new ThreadServer(cs);
+                thread.start();
+			}
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
 	}
+}
+
+public class ThreadServer implements Thread {
+
+    private Socket s;
+    private int num;
+
+    private TreadServer(Socket s) {
+        this.s = s;
+    }
 
     public void run () {
 		try {

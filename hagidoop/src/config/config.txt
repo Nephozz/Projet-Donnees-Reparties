@@ -1,0 +1,4 @@
+# host portTCP
+R2D2 5000
+R2D2 5001
+R2D2 5002
