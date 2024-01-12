@@ -1,15 +1,10 @@
 package hdfs;
 
-import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
-
 //rajouter des méthodes read, write, delete
 
 public class HdfsServer {
 	
     private Socket s;
-    private int num;
 
     private HdfsServer(Socket s) {
         this.s = s;
@@ -32,32 +27,52 @@ public class HdfsServer {
 public class ThreadServer implements Thread {
 
     private Socket s;
-    private int num;
 
     private TreadServer(Socket s) {
         this.s = s;
     }
 
-    public void run () {
-		try {
-			InputStream in = cs.getInputStream();
-			OutputStream out = cs.getOutputStream();
+    public void run() {
+        try {
+            InputStream in = s.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 
-            ObjectInputStream oin = new ObjectInputStream(in);
-            ObjectOutputStream oout = new ObjectOutputStream(out);
-                
+            String message = reader.readLine();
+
+            char action = message.charAt(0);
+            String fragment = message.substring(1);
+
+            switch (action) {
+                case '0':
+                    handleRead(fragment);
+                    break;
+                case '1':
+                    handleWrite(fragment);
+                    break;
+                case '2':
+                    handleDelete(fragment);
+                    break;
+                default:
+                    break;
             }
-		} catch (IOException | ClassNotFoundException ex) {
+
+        } catch (IOException ex) {
             ex.printStackTrace();
         } finally {
             try {
                 s.close();
-                in.close();
-                out.close();
-                oin.close();
-                oout.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-	}
+    }
+
+    private void handleRead(String fragment) {
+    }
+
+    private void handleWrite(String fragment) {
+    }
+
+    private void handleDelete(String fragment) {
+    }
+}
