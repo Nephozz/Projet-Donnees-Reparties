@@ -2,12 +2,10 @@ package hdfs;
 
 import java.io.*;
 import java.net.*;
+import interfaces.KV;
+import hdfs.FileReaderWriterImpl;
 
 public class HdfsClient {
-    public enum FMT {
-        TXT,
-        KV
-    }
 	
 	private static void usage() {
 		System.out.println("Usage: java HdfsClient read <file>");
@@ -31,7 +29,7 @@ public class HdfsClient {
         }
 	}
 	
-	public static void HdfsWrite(FMT fmt, String fname) {
+	public static void HdfsWrite(int fmt, String fname) {
         Socket socket = new Socket(serverAddress, serverPort);
         OutputStream outputStream = socket.getOutputStream();
         InputStream inputStream = socket.getInputStream();
@@ -40,7 +38,7 @@ public class HdfsClient {
         int nbLu;
 
         switch (fmt) {
-            case TXT:
+            case FileReaderWriterImpl.FMT_TXT:
                 // write txt
                 try (BufferedReader reader = new BufferedReader(new FileReader(fname))) {
                     String line;
@@ -53,7 +51,7 @@ public class HdfsClient {
                     e.printStackTrace();
                 }
                 break;
-            case KV:
+            case FileReaderWriterImpl.FMT_KV:
                 // write kv
                 break;
             default:
