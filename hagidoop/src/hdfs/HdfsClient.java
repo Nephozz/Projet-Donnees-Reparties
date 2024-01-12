@@ -17,8 +17,18 @@ public class HdfsClient {
 	
 	public static void HdfsDelete(String fname) {
         Socket socket = new Socket(serverAddress, serverPort);
-        ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-        ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+        OutputStream outputStream = socket.getOutputStream();
+        InputStream inputStream = socket.getInputStream();
+
+        byte[] buffer = new byte[1024];
+        int nbLu;
+
+        try {
+            buffer = fname.getBytes();
+            outputStream.write(buffer, 0, nbLu);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 	}
 	
 	public static void HdfsWrite(FMT fmt, String fname) {
@@ -27,6 +37,7 @@ public class HdfsClient {
         InputStream inputStream = socket.getInputStream();
         
         byte[] buffer = new byte[1024];
+        int nbLu;
 
         switch (fmt) {
             case TXT:
@@ -35,7 +46,8 @@ public class HdfsClient {
                     String line;
                     while ((line = reader.readLine()) != null) {
                         buffer = line.getBytes();
-                        outputStream.write(buffer, 0, buffer.length);
+                        nbLu = inputStream.read(buffer);
+                        outputStream.write(buffer, 0, nbLu);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -52,9 +64,26 @@ public class HdfsClient {
 
 	public static void HdfsRead(String fname) {
         Socket socket = new Socket(serverAddress, serverPort);
-        ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-        ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream())
+        OutputStream outputStream = socket.getOutputStream();
+        InputStream inputStream = socket.getInputStream();
 
+        byte[] buffer = new byte[1024];
+        int nbLu;
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fname))) {
+            buffer = fname.getBytes();
+            nbLu = inputStream.read(buffer);
+            outputStream.write(buffer, 0, nbLu);
+
+            buffer = inputStream.readAllBytes();
+            String str = new String(buffer);
+            nbLu = inputStream.read(buffer);
+            writer.write(str);
+
+            System.out.println("File written successfully.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 	}
 
 	public static void main(String[] args) {
