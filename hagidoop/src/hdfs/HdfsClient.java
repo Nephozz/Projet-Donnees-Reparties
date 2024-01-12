@@ -1,8 +1,7 @@
 package hdfs;
 
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
+import java.io.*;
+import java.net.*;
 
 public class HdfsClient {
     public enum FMT {
@@ -24,12 +23,23 @@ public class HdfsClient {
 	
 	public static void HdfsWrite(FMT fmt, String fname) {
         Socket socket = new Socket(serverAddress, serverPort);
-        ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-        ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+        OutputStream outputStream = socket.getOutputStream();
+        InputStream inputStream = socket.getInputStream();
         
+        byte[] buffer = new byte[1024];
+
         switch (fmt) {
             case TXT:
                 // write txt
+                try (BufferedReader reader = new BufferedReader(new FileReader(fname))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        buffer = line.getBytes();
+                        outputStream.write(buffer, 0, buffer.length);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
             case KV:
                 // write kv
