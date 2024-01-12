@@ -2,6 +2,8 @@ package hdfs;
 
 import java.io.*;
 import java.net.*;
+import java.util.HashMap;
+
 import interfaces.KV;
 import hdfs.FileReaderWriterImpl;
 
@@ -43,7 +45,10 @@ public class HdfsClient {
         	}
         	br.close();
 
-        	String[] machines, ports = readConfigFile("\\wsl.localhost\Ubuntu\home\margaux\hagidoop\config\config.txt");
+        	HashMap<String,Integer> config = readConfigFile("./hagidoop/config/config.txt");
+
+            String[] machines = config.keySet().toArray(new String[0]);
+            int[] ports = config.values().stream().mapToInt(Integer::intValue).toArray();
 
        	 	int numFragments = machines.length;
         	int fragmentSize = content.length() / numFragments;
@@ -77,7 +82,7 @@ public class HdfsClient {
 	}
 
 	//lire mon fichier avec mes machines
-	private static String[] readConfigFile(String configFilePath) throws IOException {
+	private static HashMap<String, Integer> readConfigFile(String configFilePath) throws IOException {
         return;
     }
 
@@ -113,28 +118,29 @@ public class HdfsClient {
             usage();
             return;
         }
-		///test
 		
 		String action = args[0];
 
-		switch (operation) {
+		switch (action) {
             case "read":
-                HdfsRead(fileName);
+                HdfsRead(args[1]);
                 break;
             case "write":
 				// à modif si kv ou text traiter les options
                 String option = args[1];
+                int fmt = -1;
                 if (option == "txt") {
-                    HdfsWrite(FMT.TXT, fileName);
+                    fmt = FileReaderWriterImpl.FMT_TXT;
                 } else if (option == "kv") {
-                    HdfsWrite(FMT.KV, fileName);
+                    fmt = FileReaderWriterImpl.FMT_KV;
                 } else {
                     usage();
                     System.exit(1);
                 }
+                HdfsWrite(fmt, args[2]);
                 break;
             case "delete":
-                HdfsDelete(fileName);
+                HdfsDelete(args[1]);
                 break;
             default:
                 usage();
@@ -142,30 +148,4 @@ public class HdfsClient {
         }
 	}
 }
-		switch (action) {
-			case "read":
-				HdfsRead(arg[1]);
-				break;
-			case "write":
-				String format = args[1];
-				int fileFormat;
-				if (format.equals("txt")) {
-                    fileFormat = FMT_TXT;
-                } else if (format.equals("kv")) {
-                    fileFormat = FMT_KV;
-                } else {
-                    usage();
-                    return;
-                } 
-				HdfsWrite(fileFormat, args[2])
-				break;
-			case "delete":
-				HdfsDelete(args[1]);
-				break;
-			default:
-				usage();
-				return;
-		}
-	}
-	
-} // 300 mo 3 sleve le count 3 sec et avec hagidoop 1300
+// 300 mo 3 sleve le count 3 sec et avec hagidoop 1300
