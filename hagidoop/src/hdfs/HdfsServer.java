@@ -21,8 +21,17 @@ public class HdfsServer implements Runnable {
             while (true) {
                 Socket client = serverSocket.accept();
                 System.out.println("Accepted connection from " + client.getInetAddress());
-                new Thread(new HdfsServer(client,port)).start();
-            }
+                
+                Socket clienSocket = this.client;
+
+                ObjectInputStream inputStream = new ObjectInputStream(clienSocket.getInputStream());
+                ObjectOutputStream outputStream = new ObjectOutputStream(clienSocket.getOutputStream());
+
+                Integer[] tab = (Integer[]) inputStream.readObject();
+
+                this.id = tab[0];
+                int request = tab[1];
+                }
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
