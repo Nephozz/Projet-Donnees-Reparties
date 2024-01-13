@@ -43,7 +43,7 @@ public class HdfsClient {
         		ObjectOutputStream oout = new ObjectOutputStream(out);
 
         		//marqueur pour dire que c'est ecrire
-        		String markedFragment = "1 "+fragment;
+        		String markedFragment = "1"+fname+"-"+i+" "+fragment;
 
         		oout.writeObject(markedFragment);
         		oout.flush();
