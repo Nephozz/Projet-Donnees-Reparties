@@ -4,8 +4,8 @@ import java.io.*;
 import java.net.*;
 import java.util.HashMap;
 
+import interfaces.FileReaderWriterImpl;
 import interfaces.KV;
-import hdfs.FileReaderWriterImpl;
 
 public class HdfsClient {
 	
@@ -101,7 +101,9 @@ public class HdfsClient {
         String line;
 
         while ((line = br.readLine()) != null) {
-            config.put(line.split(" ")[0], Integer.parseInt(line.split(" ")[1]));
+            String key = line.split(" ")[0];
+            int value = Integer.parseInt(line.split(" ")[1]);
+            config.put(key, value);
         }
         br.close();
         
