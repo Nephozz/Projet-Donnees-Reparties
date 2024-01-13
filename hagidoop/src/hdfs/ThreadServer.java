@@ -18,7 +18,8 @@ public class ThreadServer extends Thread {
             Socket clientSocket = this.client;
 
             ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
-            BufferedReader reader= new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
+            BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
             while (true) {
                 String request = reader.readLine();
@@ -37,13 +38,13 @@ public class ThreadServer extends Thread {
                     if (fmt == 0) {
                         // Ecrire le fragment sous le format txt
                         BufferedWriter writer = new BufferedWriter(new FileWriter(fname, true));
-                        String fragment = tokens[3];
+                        String fragment = inputStream.readObject().toString();
 
                         writer.write(fragment);
                         writer.close();
                     } else if (fmt == 1) {
                         // Ecrire le fragment sous le format kv
-                        KV fragment = new KV(tokens[3], tokens[4]);
+                        KV fragment = (KV) inputStream.readObject();
                         FileReaderWriterImpl file = new FileReaderWriterImpl(fname);
                         file.open("w");
                         file.write(fragment);
@@ -82,7 +83,7 @@ public class ThreadServer extends Thread {
                     System.out.println("Unknown request: " + request);
                 }
             }
-		} catch (IOException ex) {
+		} catch (Exception ex) {
             ex.printStackTrace();
         }
 	}

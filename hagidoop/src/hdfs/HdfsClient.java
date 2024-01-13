@@ -110,9 +110,10 @@ public class HdfsClient {
         ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
 
         //marqueur pour dire que c'est ecrire
-        String markedFragment = new String("WRITE " + fname + " " + fmt + " " + fragment);
-
+        String markedFragment = new String("WRITE " + fname + " " + fmt);
         outputStream.writeObject(markedFragment);
+
+        outputStream.writeObject(fragment);
         outputStream.flush();
 
         String response = (String) inputStream.readObject();
@@ -126,16 +127,18 @@ public class HdfsClient {
 
 	//lire mon fichier avec mes machines
 	private static HashMap<String, Integer> readConfigFile(String configFilePath) throws IOException {
-        BufferedReader br = new BufferedReader(new FileReader(configFilePath));
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(configFilePath));
         HashMap<String, Integer> config = new HashMap<String, Integer>();
         String line;
 
-        while ((line = br.readLine()) != null) {
-            String key = line.split(" ")[0];
-            int value = Integer.parseInt(line.split(" ")[1]);
-            config.put(key, value);
+        while ((line = bufferedReader.readLine()) != null) {
+            if (line.startsWith("#")) { continue; }
+
+            String host = line.split(" ")[0];
+            int port = Integer.parseInt(line.split(" ")[1]);
+            config.put(host, port);
         }
-        br.close();
+        bufferedReader.close();
         
         return config;
     }
@@ -218,4 +221,3 @@ public class HdfsClient {
         }
 	}
 }
-// 300 mo 3 sleve le count 3 sec et avec hagidoop 1300
