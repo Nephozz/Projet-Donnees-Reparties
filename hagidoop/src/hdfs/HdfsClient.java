@@ -22,11 +22,20 @@ public class HdfsClient {
         Socket socket = new Socket(serverAddress, serverPort);
 
         ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+        ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
 
         String request = new String("DELETE " + fname);
 
         try {
             outputStream.writeObject(request);
+
+            String response = (String) inputStream.readObject();
+            System.out.println(response);
+
+            // Fermer les flux
+            inputStream.close();
+            outputStream.close();
+            socket.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -58,6 +67,7 @@ public class HdfsClient {
             	String fragment = content.substring(startOffset, endOffset);
 
 				Socket socket = new Socket(machines[i], ports[i]);
+                ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
 
         		//envoi le fragment au serveur
         		ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
@@ -68,11 +78,15 @@ public class HdfsClient {
         		outputStream.writeObject(markedFragment);
         		outputStream.flush();
 
+                String response = (String) inputStream.readObject();
+                System.out.println(response);
+
         		// Fermer les flux
         		outputStream.close();
+                inputStream.close();
         		socket.close();
         	}
-		} catch (IOException e) {
+		} catch (Exception e) {
             e.printStackTrace();
         }
 	}
@@ -92,25 +106,35 @@ public class HdfsClient {
     }
 
 	public static void HdfsRead(String fname) {
-        Socket socket = new Socket(serverAddress, serverPort);
-        ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-        InputStream inputStream = socket.getInputStream();
-
-        String request = new String("READ " + fname);
-        byte[] buffer = new byte[1024];
-        int nbLu;
-
+            
         try {
+            HashMap<String,Integer> config = readConfigFile("./hagidoop/config/config.txt");
+
+            String[] machines = config.keySet().toArray(new String[0]);
+            int[] ports = config.values().stream().mapToInt(Integer::intValue).toArray();
+            int rnd = (int) (Math.random() * machines.length);
+
+            Socket socket = new Socket(machines[rnd], ports[rnd]);
+            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+            ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+
+            String request = new String("READ " + fname);
+
             BufferedWriter writer = new BufferedWriter(new FileWriter(fname));
             outputStream.writeObject(request);
 
-            buffer = inputStream.readAllBytes();
-            String str = new String(buffer);
-            nbLu = inputStream.read(buffer);
+            String str = inputStream.readUTF();
             writer.write(str);
 
-            System.out.println("File written successfully.");
-        } catch (IOException e) {
+            System.out.println("File written successfully. \n");
+            System.out.println("File contents: " + str);
+
+            // Fermer les flux
+            writer.close();
+            inputStream.close();
+            outputStream.close();
+            socket.close();
+        } catch (Exception e) {
             e.printStackTrace();
         }
 	}

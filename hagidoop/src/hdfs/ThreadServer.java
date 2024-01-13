@@ -16,30 +16,36 @@ public class ThreadServer extends Thread {
 		try {
             Socket clienSocket = this.client;
 
-            ObjectInputStream inputStream = new ObjectInputStream(clienSocket.getInputStream());
             ObjectOutputStream outputStream = new ObjectOutputStream(clienSocket.getOutputStream());
+            BufferedReader bis = new BufferedReader(new InputStreamReader(clienSocket.getInputStream()));
 
-            Integer[] tab = (Integer[]) inputStream.readObject();
+            String request = bis.readLine();
 
-            this.id = tab[0];
-            int request = tab[1];
-
-            if (request == 0) {
-                int bufferSize = tab[3];
-                byte[] buffer = new byte[bufferSize];
-                Integer bytesRead = inputStream.read(buffer);
-                if (bytesRead>0) {
-                    this.whriteFile(buffer);
-                }
-            }
-            if (request == 1) {
-                
+            if (request.startsWith("DELETE")) {
+                String[] tokens = request.split(" ");
+                String fname = tokens[1];
+                // Supprimer le fichier fname
+                String response = fname + " DELETED";
+                outputStream.writeObject(response);
+            } else if (request.startsWith("WRITE")) {
+                String[] tokens = request.split(" ");
+                String fragment = tokens[1];
+                String response = fragment + " WRITTEN";
+                outputStream.writeObject(response);
+            } else if (request.startsWith("READ")) {
+                String[] tokens = request.split(" ");
+                String fname = tokens[1];
+                // Lire le fichier fname
+                String content = "Readind file " + fname + " ...";
+                outputStream.writeObject(content);
+            } else {
+                System.out.println("Unknown request: " + request);
             }
 
             clienSocket.close();
             inputStream.close();
             outputStream.close();
-		} catch (IOException | ClassNotFoundException ex) {
+		} catch (IOException ex) {
             ex.printStackTrace();
         }
 	}
