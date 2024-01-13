@@ -37,11 +37,17 @@ public class HdfsServer extends Thread {
 
                     if (fmt == 0) {
                         // Ecrire le fragment sous le format txt
-                        BufferedWriter writer = new BufferedWriter(new FileWriter(fname, true));
                         String fragment = inputStream.readObject().toString();
+                        FileReaderWriterImpl file = new FileReaderWriterImpl(fname);
+                        file.open("w");
+                        String[] lines = fragment.split("\n");
 
-                        writer.write(fragment);
-                        writer.close();
+                        for (String line : lines) {
+                            KV kv = new KV(line, String.valueOf(file.getIndex()));
+                            file.write(kv);
+                        }
+
+                        file.close();
                     } else if (fmt == 1) {
                         // Ecrire le fragment sous le format kv
                         KV fragment = (KV) inputStream.readObject();

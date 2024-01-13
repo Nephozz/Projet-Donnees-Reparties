@@ -56,6 +56,7 @@ public class FileReaderWriterImpl implements FileReaderWriter {
         if (this.mode.equals("w")) {
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(this.fname, true))) {
                 writer.write(record.k + " " + record.v);
+                index ++;
                 writer.close();
             } catch (Exception e) {
                 e.printStackTrace();
