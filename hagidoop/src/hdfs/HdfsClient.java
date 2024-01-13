@@ -19,14 +19,20 @@ public class HdfsClient {
 	}
 	
 	public static void HdfsDelete(String fname) {
-        Socket socket = new Socket(serverAddress, serverPort);
-
-        ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-        ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
-
-        String request = new String("DELETE " + fname);
-
         try {
+            HashMap<String,Integer> config = readConfigFile("./hagidoop/config/config.txt");
+
+            String[] machines = config.keySet().toArray(new String[0]);
+            int[] ports = config.values().stream().mapToInt(Integer::intValue).toArray();
+            int rnd = (int) (Math.random() * machines.length);
+
+            Socket socket = new Socket(machines[rnd], ports[rnd]);
+
+            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+            ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+
+            String request = new String("DELETE " + fname);
+        
             outputStream.writeObject(request);
 
             String response = (String) inputStream.readObject();
