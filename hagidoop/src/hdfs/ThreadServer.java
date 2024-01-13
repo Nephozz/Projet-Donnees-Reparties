@@ -6,7 +6,6 @@ import java.io.*;
 public class ThreadServer extends Thread {
 
     private Socket client;
-    private int id;
 
     public ThreadServer(Socket s) {
         this.client = s;
@@ -17,9 +16,9 @@ public class ThreadServer extends Thread {
             Socket clienSocket = this.client;
 
             ObjectOutputStream outputStream = new ObjectOutputStream(clienSocket.getOutputStream());
-            BufferedReader bis = new BufferedReader(new InputStreamReader(clienSocket.getInputStream()));
+            BufferedReader bufferedInputStream = new BufferedReader(new InputStreamReader(clienSocket.getInputStream()));
 
-            String request = bis.readLine();
+            String request = bufferedInputStream.readLine();
 
             if (request.startsWith("DELETE")) {
                 String[] tokens = request.split(" ");
@@ -29,7 +28,15 @@ public class ThreadServer extends Thread {
                 outputStream.writeObject(response);
             } else if (request.startsWith("WRITE")) {
                 String[] tokens = request.split(" ");
-                String fragment = tokens[1];
+                int fmt = Integer.parseInt(tokens[1]);
+                String fragment = tokens[2];
+                if (fmt == 0) {
+                    // Ecrire le fragment sous le format txt
+                } else if (fmt == 1) {
+                    // Ecrire le fragment sous le format kv
+                } else {
+                    System.out.println("Unknown format: " + fmt);
+                }
                 String response = fragment + " WRITTEN";
                 outputStream.writeObject(response);
             } else if (request.startsWith("READ")) {
@@ -43,7 +50,7 @@ public class ThreadServer extends Thread {
             }
 
             clienSocket.close();
-            inputStream.close();
+            bufferedInputStream.close();
             outputStream.close();
 		} catch (IOException ex) {
             ex.printStackTrace();

@@ -8,9 +8,6 @@ import interfaces.KV;
 import hdfs.FileReaderWriterImpl;
 
 public class HdfsClient {
-
-	public static final int FMT_TXT = 0;
-    public static final int FMT_KV = 1;
 	
 	private static void usage() {
 		System.out.println("Usage: java HdfsClient read <file>");
@@ -79,7 +76,7 @@ public class HdfsClient {
         		ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
 
         		//marqueur pour dire que c'est ecrire
-        		String markedFragment = new String("WRITE "+ fragment);
+        		String markedFragment = new String("WRITE "+ fmt + " " + fragment);
 
         		outputStream.writeObject(markedFragment);
         		outputStream.flush();
