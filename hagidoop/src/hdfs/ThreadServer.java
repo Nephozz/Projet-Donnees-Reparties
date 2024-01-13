@@ -3,6 +3,9 @@ package hdfs;
 import java.net.*;
 import java.io.*;
 
+import interfaces.FileReaderWriterImpl;
+import interfaces.KV;
+
 public class ThreadServer extends Thread {
     private Socket client;
 
@@ -12,14 +15,14 @@ public class ThreadServer extends Thread {
 
     public void run () {
 		try {
-            Socket clienSocket = this.client;
+            Socket clientSocket = this.client;
 
-            ObjectOutputStream outputStream = new ObjectOutputStream(clienSocket.getOutputStream());
-            BufferedReader reader= new BufferedReader(new InputStreamReader(clienSocket.getInputStream()));
+            ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+            BufferedReader reader= new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
             while (true) {
                 String request = reader.readLine();
-                
+
                 if (request.startsWith("DELETE")) {
                     String[] tokens = request.split(" ");
                     String fname = tokens[1];
@@ -28,31 +31,57 @@ public class ThreadServer extends Thread {
                     outputStream.writeObject(response);
                 } else if (request.startsWith("WRITE")) {
                     String[] tokens = request.split(" ");
-                    int fmt = Integer.parseInt(tokens[1]);
-                    String fragment = tokens[2];
+                    String fname = tokens[1];
+                    int fmt = Integer.parseInt(tokens[2]);
+
                     if (fmt == 0) {
                         // Ecrire le fragment sous le format txt
+                        BufferedWriter writer = new BufferedWriter(new FileWriter(fname, true));
+                        String fragment = tokens[3];
+
+                        writer.write(fragment);
+                        writer.close();
                     } else if (fmt == 1) {
                         // Ecrire le fragment sous le format kv
+                        KV fragment = new KV(tokens[3], tokens[4]);
+                        FileReaderWriterImpl file = new FileReaderWriterImpl(fname);
+                        file.open("w");
+                        file.write(fragment);
+                        file.close();
                     } else {
                         System.out.println("Unknown format: " + fmt);
                     }
-                    String response = fragment + " WRITTEN";
+                    String response = fname + " WRITTEN";
                     outputStream.writeObject(response);
                 } else if (request.startsWith("READ")) {
                     String[] tokens = request.split(" ");
                     String fname = tokens[1];
+
+                    FileReaderWriterImpl file = new FileReaderWriterImpl(fname);
+                    file.open("r");
+
+                    String response = "Readind file " + fname + " ...";
+                    outputStream.writeObject(response);
+                    
                     // Lire le fichier fname
-                    String content = "Readind file " + fname + " ...";
+                    KV content = file.read();
+
+                    while (content.k != null) {
+                        outputStream.writeObject(content);
+                        content = file.read();
+                    }
+
+                    content = null;
                     outputStream.writeObject(content);
+
+                    String end = "END OF FILE";
+                    outputStream.writeObject(end);
+
+                    file.close();
                 } else {
                     System.out.println("Unknown request: " + request);
                 }
             }
-
-            clienSocket.close();
-            reader.close();
-            outputStream.close();
 		} catch (IOException ex) {
             ex.printStackTrace();
         }

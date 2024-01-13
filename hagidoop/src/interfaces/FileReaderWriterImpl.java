@@ -38,6 +38,10 @@ public class FileReaderWriterImpl implements FileReaderWriter {
             } catch (Exception e) {
                 e.printStackTrace();
             } 
+        } else if (this.mode.equals("w")) {
+            System.out.println("File is opened in write mode");
+        } else {
+            System.out.println("Unknown mode: " + this.mode);
         }
         return kv;
     }
@@ -56,6 +60,10 @@ public class FileReaderWriterImpl implements FileReaderWriter {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        } else if (this.mode.equals("r")) {
+            System.out.println("File is opened in read mode");
+        } else {
+            System.out.println("Unknown mode: " + this.mode);
         }
     }
 
