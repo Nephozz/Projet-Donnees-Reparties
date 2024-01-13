@@ -20,15 +20,13 @@ public class HdfsClient {
 	
 	public static void HdfsDelete(String fname) {
         Socket socket = new Socket(serverAddress, serverPort);
-        OutputStream outputStream = socket.getOutputStream();
-        InputStream inputStream = socket.getInputStream();
 
-        byte[] buffer = new byte[1024];
-        int nbLu;
+        ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+
+        String request = new String("DELETE " + fname);
 
         try {
-            buffer = fname.getBytes();
-            outputStream.write(buffer, 0, nbLu);
+            outputStream.writeObject(request);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -62,18 +60,16 @@ public class HdfsClient {
 				Socket socket = new Socket(machines[i], ports[i]);
 
         		//envoi le fragment au serveur
-        		OutputStream out = socket.getOutputStream();
-        		ObjectOutputStream oout = new ObjectOutputStream(out);
+        		ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
 
         		//marqueur pour dire que c'est ecrire
-        		String markedFragment = "1 "+fragment;
+        		String markedFragment = new String("WRITE "+ fragment);
 
-        		oout.writeObject(markedFragment);
-        		oout.flush();
+        		outputStream.writeObject(markedFragment);
+        		outputStream.flush();
 
         		// Fermer les flux
-        		oout.close();
-        		out.close();
+        		outputStream.close();
         		socket.close();
         	}
 		} catch (IOException e) {
@@ -83,21 +79,30 @@ public class HdfsClient {
 
 	//lire mon fichier avec mes machines
 	private static HashMap<String, Integer> readConfigFile(String configFilePath) throws IOException {
-        return;
+        BufferedReader br = new BufferedReader(new FileReader(configFilePath));
+        HashMap<String, Integer> config = new HashMap<String, Integer>();
+        String line;
+
+        while ((line = br.readLine()) != null) {
+            config.put(line.split(" ")[0], Integer.parseInt(line.split(" ")[1]));
+        }
+        br.close();
+        
+        return config;
     }
 
 	public static void HdfsRead(String fname) {
         Socket socket = new Socket(serverAddress, serverPort);
-        OutputStream outputStream = socket.getOutputStream();
+        ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
         InputStream inputStream = socket.getInputStream();
 
+        String request = new String("READ " + fname);
         byte[] buffer = new byte[1024];
         int nbLu;
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fname))) {
-            buffer = fname.getBytes();
-            nbLu = inputStream.read(buffer);
-            outputStream.write(buffer, 0, nbLu);
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(fname));
+            outputStream.writeObject(request);
 
             buffer = inputStream.readAllBytes();
             String str = new String(buffer);
