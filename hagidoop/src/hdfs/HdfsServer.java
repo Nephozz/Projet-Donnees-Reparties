@@ -61,6 +61,7 @@ public class HdfsServer extends Thread {
                     String response = fname + " WRITTEN";
                     outputStream.writeObject(response);
                 } else if (request.startsWith("READ")) {
+                    //TODO: Map-Reduce
                     String[] tokens = request.split(" ");
                     String fname = tokens[1];
 
