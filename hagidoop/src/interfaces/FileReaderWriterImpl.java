@@ -39,8 +39,10 @@ public class FileReaderWriterImpl implements FileReaderWriter {
                 e.printStackTrace();
             } 
         } else if (this.mode.equals("w")) {
+            kv = null;
             System.out.println("File is opened in write mode");
         } else {
+            kv = null;
             System.out.println("Unknown mode: " + this.mode);
         }
         return kv;

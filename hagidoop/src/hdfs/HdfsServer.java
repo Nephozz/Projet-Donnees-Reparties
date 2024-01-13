@@ -73,7 +73,7 @@ public class HdfsServer extends Thread {
                     // Lire le fichier fname
                     KV content = file.read();
 
-                    while (content.k != null) {
+                    while (content != null) {
                         outputStream.writeObject(content);
                         content = file.read();
                     }

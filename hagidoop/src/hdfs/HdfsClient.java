@@ -158,16 +158,17 @@ public class HdfsClient {
 
             String request = new String("READ " + fname);
 
-            BufferedWriter writer = new BufferedWriter(new FileWriter(fname));
+            FileReaderWriterImpl writer = new FileReaderWriterImpl(fname);
             outputStream.writeObject(request);
 
             String response = (String) inputStream.readObject();
             System.out.println(response);
 
             KV content;
+            writer.open("w");
 
-            while ((content = (KV) inputStream.readObject()).k != null) {
-                writer.write(content.k + "\n");
+            while ((content = (KV) inputStream.readObject()) != null) {
+                writer.write(content);
             }
 
             String end = (String) inputStream.readObject();
