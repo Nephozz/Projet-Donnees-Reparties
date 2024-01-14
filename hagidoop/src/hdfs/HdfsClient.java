@@ -10,6 +10,9 @@ import interfaces.FileReaderWriterImpl;
 import interfaces.KV;
 
 public class HdfsClient {
+
+    private static List<String> machines = new ArrayList<>();
+    private static List<Integer> ports = new ArrayList<>();
 	
 	private static void usage() {
 		System.out.println("Usage: java HdfsClient read <file>");
@@ -19,32 +22,15 @@ public class HdfsClient {
 	
 	public static void HdfsDelete(String fname) {
         try {
-            HashMap<String,Integer> config = readConfigFile("./config/config.txt");
-
-            String[] machines = config.keySet().toArray(new String[0]);
-            int[] ports = config.values().stream().mapToInt(Integer::intValue).toArray();
-            int rnd = (int) (Math.random() * machines.length);
-
-            //Socket socket = new Socket(machines[rnd], ports[rnd]);
-            Socket socket = new Socket(machines[rnd], 5002);
-            System.out.println(machines[rnd]);
-
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            //BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-            String request = new String("DELETE " + fname);
-            System.out.println(request);
-        
-            out.write(request);
-            out.flush();
-
-            //String response = in.readLine();
-            //System.out.println(response);
-
-            // Fermer les flux
-            //in.close();
-            out.close();
-            socket.close();
+            for (int i = 0; i < port.size(); i++) {
+                Socket socket = new Socket(machines.get(i), ports.get(i));
+                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                String majFname = majFname(fname, i);
+                String request = "DELETE " + majFname;
+                out.println(request);
+                out.close();
+                socket.close();
+            } 
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -52,53 +38,64 @@ public class HdfsClient {
 	
 	public static void HdfsWrite(int fmt, String fname) {
 		try {
-            HashMap<String,Integer> config = readConfigFile("./config/config.txt");
+       	 	int numFragments = machines.size();
+            File file = new File(fname);
+            int fSize = (int) file.length();
 
-            String[] machines = config.keySet().toArray(new String[0]);
-            int[] ports = config.values().stream().mapToInt(Integer::intValue).toArray();
-
-       	 	int numFragments = machines.length;
-            int fragmentSize;
+            int fragSize = fSize/numFragments;
 
             if (fmt == FileReaderWriterImpl.FMT_TXT) {
-                BufferedReader bufferedReader = new BufferedReader(new FileReader(fname));
-                StringBuilder content = new StringBuilder();
-                String line;
+                rw = new FileImplTxt(fname);
+                rw.open('r');
 
-                while ((line = bufferedReader.readLine()) != null) {
-                    content.append(line).append("\n");
-                }
-                bufferedReader.close();
-                fragmentSize = content.length() / numFragments;
+                KV kv;
 
                 for (int i = 0; i < numFragments; i++) {
-                    int startOffset = i*fragmentSize;
-                    int endOffset = (i+1)*fragmentSize;
-    
-                    String fragment = content.substring(startOffset, endOffset);
+                    String majFname = majFname(fname, i);
 
-                    sendFragment(fragment, fname, fmt, machines[i], ports[i]);
-                  }
-            } else if (fmt == FileReaderWriterImpl.FMT_KV) {
-                FileReaderWriterImpl file = new FileReaderWriterImpl(fname);
-                file.open("r");
+                    Socket socket = new Socket(adress.get(i), port.get(i));
+                    PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+                    String content = "";
 
-                List<KV> content = new ArrayList<KV>();
-                KV kv = file.read();
+                    int startOffset = i*fragSize;
+                    int endOffset = (i+1)*fragSize;
 
-                while (kv.k != null) {
-                    content.add(kv);
-                    kv = file.read();
+                    for (int j = startOffset; j < endOffset; j++) {
+                        kv = rw.read();
+                        if (kv != null) {
+                            content += kv.toString() + "\n";
+                        }
+                    }
+                    String request = "WRITE " + majFname + "\n" + content;
+                    writer.println(request);
+                    writer.close();
+                    socket.close();
                 }
+            } else if (fmt == FileReaderWriterImpl.FMT_KV) {
+                rw = new FileImplKv(fname);
+                rw.open('r');
+                KV kv;
 
-                file.close();
-                fragmentSize = content.size() / numFragments;
+                for (int i = 0; i < fs; i++) {
+                    String majFname = majFname(fname, i);
 
-                for (int i = 0; i < numFragments; i++) {  
-                    KV fragment = new KV(content.get(i).k, content.get(i).v);
-                    System.out.println(machines[i]);
-                    System.out.println(ports[i]);
-                    sendFragment(fragment, fname, fmt, machines[i], ports[i]);
+                    Socket socket = new Socket(adress.get(i), port.get(i));
+                    PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+                    String content = "";
+
+                    int startOffset = i*fragSize;
+                    int endOffset = (i+1)*fragSize;
+
+                    for (int j = startOffset; j < endOffset; j++) {
+                        kv = rw.read();
+                        if (kv != null) {
+                            content += kv.toString() + "\n";
+                        }
+                    }
+                    String request = "WRITE " + majFname + "\n" + content;
+                    writer.println(request);
+                    writer.close();
+                    socket.close();
                 }
             } else {
                 System.out.println("Unknown format: " + fmt);
@@ -108,101 +105,64 @@ public class HdfsClient {
         }
 	}
 
-    private static void sendFragment(Object fragment, String fname, int fmt, String machine, int port) throws IOException, ClassNotFoundException {
-
-        Socket socket = new Socket(machine, port);
-        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-
-        //envoi le fragment au serveur
-        //ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-        //ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
-
-        //marqueur pour dire que c'est ecrire
-        String markedFragment = "WRITE " + fname + " " + fmt + "\n" + fragment;
-        System.out.println(markedFragment);
-
-        out.write(markedFragment);
-        //outputStream.writeObject(markedFragment);
-
-        //String response = (String) inputStream.readObject();
-        //System.out.println(response);
-
-        // Fermer les flux
-        //outputStream.close();
-        //inputStream.close();
-        out.close();
-        socket.close();
-    }
-
-	//lire mon fichier avec mes machines
-    //TODO
-    //modif a faire si je veux tout executer sur machine perso
-    //je veux pas avoir le meme hote et des ports différents
-	private static HashMap<String, Integer> readConfigFile(String configFilePath) throws IOException {
-        BufferedReader bufferedReader = new BufferedReader(new FileReader(configFilePath));
-        HashMap<String, Integer> config = new HashMap<String, Integer>();
-        String line;
-
-        while ((line = bufferedReader.readLine()) != null) {
-            if (line.startsWith("#")) { continue; }
-
-            String host = line.split(" ")[0];
-            int port = Integer.parseInt(line.split(" ")[1]);
-            config.put(host, port);
-        }
-        bufferedReader.close();
-        
-        return config;
-    }
-
 	public static void HdfsRead(String fname) {
             
         try {
-            HashMap<String,Integer> config = readConfigFile("./config/config.txt");
+            rw = new FileImplTxt(fname);
+            rw.open('w');
 
-            String[] machines = config.keySet().toArray(new String[0]);
-            int[] ports = config.values().stream().mapToInt(Integer::intValue).toArray();
-            int rnd = (int) (Math.random() * machines.length);
+            KV kv;
 
-            //Socket socket = new Socket(machines[rnd], ports[rnd]);
-            Socket socket = new Socket(machines[rnd], 5002);
-            System.out.println(machines[rnd]);
+            for (int i = 0; i < ports.size(); i++) {
+                String majFname = majFname(fname, i);
 
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                Socket socket = new Socket(adress.get(i), port.get(i));
+                PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            String request = new String("READ " + fname);
-            System.out.println(request);
+                String request = "READ " + majFname;
+                writer.println(request);
+                writer.flush();
 
-            out.println(request);
-            out.flush();
+                String line;
 
-            FileReaderWriterImpl writer = new FileReaderWriterImpl("test-read.txt");
-            writer.open("w");
-
-            //String response = (String) in.readLine();
-            //System.out.println(response);
-
-            String line;
-
-            while ((line = in.readLine()) != null) {
-                System.out.println(line);
-                KV kv = new KV(line.substring(1), String.valueOf(line.charAt(0)));
-                writer.write(kv);
-            }
-
-            String end = (String) in.readLine();
-            System.out.println(end);
-
-            // Fermer les flux
-            in.close();
-            writer.close();
-            out.close();
-            socket.close();
+                while ((line = reader.readLine()) != null) {
+                    kv.k = line.split(KV.SEPARATOR)[0];
+                    kv.v = line.split(KV.SEPARATOR)[1];
+                    rw.write(kv);
+                }
+                writer.close();
+                reader.close();
+                socket.close();
+            }     	
+            rw.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
 	}
+
+    public static String MajFname(String fname, int i) {
+        int dot = fileName.lastIndexOf(".");
+        String name = fileName.substring(0, dotIndex);
+        String format = fileName.substring(dotIndex);
+        return  name + "-" + i + format;
+    }
+    
+	private static void readConfigFile(String configFilePath) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(configFilePath));
+        String line;
+
+        while ((line = reader.readLine()) != null) {
+            if (line.startsWith("#")) { continue; }
+
+            String host = line.split(" ")[0];
+            int port = Integer.parseInt(line.split(" ")[1]);
+            
+            machines.add(host);
+            ports.add(port);
+        }
+        reader.close();
+    }
 
 	public static void main(String[] args) {
 		// java HdfsClient <read|write> <txt|kv> <file>
@@ -214,6 +174,7 @@ public class HdfsClient {
         }
 		
 		String action = args[0];
+        readConfigFile("./config/config.txt");
 
 		switch (action) {
             case "read":

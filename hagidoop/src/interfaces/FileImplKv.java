@@ -2,7 +2,8 @@ package interfaces;
 
 import java.io.*;
 
-public class FileReaderWriterImpl implements FileReaderWriter {
+//à modif
+public class FileImplKv implements FileReaderWriter {
     private String fname;
     private int index;
     private boolean closed;

@@ -6,6 +6,7 @@ import java.net.*;
 import interfaces.FileReaderWriterImpl;
 import interfaces.KV;
 
+//modif pour m'adapter au nouveau client
 //manque un séparateur sur différent thread
 public class HdfsServer extends Thread {
     private Socket client;
