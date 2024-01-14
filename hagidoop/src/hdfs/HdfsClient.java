@@ -36,6 +36,7 @@ public class HdfsClient {
             System.out.println(request);
         
             out.write(request);
+            out.flush();
 
             //String response = in.readLine();
             //System.out.println(response);
@@ -163,32 +164,40 @@ public class HdfsClient {
             int[] ports = config.values().stream().mapToInt(Integer::intValue).toArray();
             int rnd = (int) (Math.random() * machines.length);
 
-            Socket socket = new Socket(machines[rnd], ports[rnd]);
-            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-            ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+            //Socket socket = new Socket(machines[rnd], ports[rnd]);
+            Socket socket = new Socket(machines[rnd], 5002);
+            System.out.println(machines[rnd]);
+
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
             String request = new String("READ " + fname);
+            System.out.println(request);
 
-            FileReaderWriterImpl writer = new FileReaderWriterImpl(fname);
-            outputStream.writeObject(request);
+            out.println(request);
+            out.flush();
 
-            String response = (String) inputStream.readObject();
-            System.out.println(response);
-
-            KV content;
+            FileReaderWriterImpl writer = new FileReaderWriterImpl("test-read.txt");
             writer.open("w");
 
-            while ((content = (KV) inputStream.readObject()) != null) {
-                writer.write(content);
+            //String response = (String) in.readLine();
+            //System.out.println(response);
+
+            String line;
+
+            while ((line = in.readLine()) != null) {
+                System.out.println(line);
+                KV kv = new KV(line.substring(1), String.valueOf(line.charAt(0)));
+                writer.write(kv);
             }
 
-            String end = (String) inputStream.readObject();
+            String end = (String) in.readLine();
             System.out.println(end);
 
             // Fermer les flux
+            in.close();
             writer.close();
-            inputStream.close();
-            outputStream.close();
+            out.close();
             socket.close();
         } catch (Exception e) {
             e.printStackTrace();

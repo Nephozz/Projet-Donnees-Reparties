@@ -27,6 +27,7 @@ public class HdfsServer extends Thread {
             //String request = reader.readLine();
             
             String request = inputStream.readLine();
+            System.out.println(request);
 
             while (request != null) {
 
@@ -74,6 +75,7 @@ public class HdfsServer extends Thread {
                     String response = fname + " WRITTEN";
                     outputStream.write(response);
                 } else if (request.startsWith("READ")) {
+                    System.out.println(1);
                     //TODO: Map-Reduce
                     String[] tokens = request.split(" ");
                     String fname = tokens[1];
@@ -81,14 +83,17 @@ public class HdfsServer extends Thread {
                     FileReaderWriterImpl file = new FileReaderWriterImpl(fname);
                     file.open("r");
 
-                    String response = "Readind file " + fname + " ...";
-                    outputStream.write(response);
+                    //String response = "Readind file " + fname + " ...";
+                    //outputStream.write(response);
                     
                     // Lire le fichier fname
                     KV content = file.read();
+                    System.out.println(content.k);
+                    content = file.read();
 
-                    while (content != null) {
-                        //outputStream.write(content);
+                    while (content.k != null) {
+                        System.out.println(content.k);
+                        outputStream.println(content.toString());
                         //erreur ne sait pas write kv
                         content = file.read();
                     }
