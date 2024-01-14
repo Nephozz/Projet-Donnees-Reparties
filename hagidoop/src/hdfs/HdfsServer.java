@@ -34,31 +34,29 @@ public class HdfsServer extends Thread {
                     String[] tokens = request.split(" ");
                     String fname = tokens[1];
                     // Supprimer le fichier fname
-                    //FileReaderWriterImpl file = new FileReaderWriterImpl(fname);
-                    //file.delete();
+                    File file = new File(fname);
+                    file.delete();
                     String response = fname + " DELETED";
                     outputStream.write(response);
                 } else if (request.startsWith("WRITE")) {
-                    //System.out.println(1);
                     String[] tokens = request.split(" ");
                     String fname = tokens[1];
-                    //System.out.println(fname);
                     int fmt = Integer.parseInt(tokens[2]);
-                    //System.out.println(fmt);
 
                     if (fmt == 0) {
                         // Ecrire le fragment sous le format txt
                         String fragment = "";
                         String extract;
                         while ((extract = inputStream.readLine())!=null) {
-                            fragment = fragment + extract;
+                            fragment = fragment + "\n" + extract;
                         }
-                        //String fragment = inputStream.readObject().toString();
+                        //a changer quand yaura plusieurs server mettre nomfichier-numeroduserveur
                         FileReaderWriterImpl file = new FileReaderWriterImpl("test-server.txt");
                         file.open("w");
                         String[] lines = fragment.split("\n");
 
                         for (String line : lines) {
+                            System.out.println(line);
                             KV kv = new KV(line, String.valueOf(file.getIndex()));
                             file.write(kv);
                         }
@@ -114,6 +112,7 @@ public class HdfsServer extends Thread {
 
     public static void main (String args[]) {
 		try {
+            //marche que sur le port 5002 a changer !!!!
 			ServerSocket serverSocket = new ServerSocket(5002);
 		    while (true) {
 			    Socket clientSocket = serverSocket.accept();

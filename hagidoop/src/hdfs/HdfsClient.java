@@ -25,21 +25,24 @@ public class HdfsClient {
             int[] ports = config.values().stream().mapToInt(Integer::intValue).toArray();
             int rnd = (int) (Math.random() * machines.length);
 
-            Socket socket = new Socket(machines[rnd], ports[rnd]);
+            //Socket socket = new Socket(machines[rnd], ports[rnd]);
+            Socket socket = new Socket(machines[rnd], 5002);
+            System.out.println(machines[rnd]);
 
-            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-            ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            //BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
             String request = new String("DELETE " + fname);
+            System.out.println(request);
         
-            outputStream.writeObject(request);
+            out.write(request);
 
-            String response = (String) inputStream.readObject();
-            System.out.println(response);
+            //String response = in.readLine();
+            //System.out.println(response);
 
             // Fermer les flux
-            inputStream.close();
-            outputStream.close();
+            //in.close();
+            out.close();
             socket.close();
         } catch (Exception e) {
             e.printStackTrace();
