@@ -19,7 +19,7 @@ public class HdfsClient {
 	
 	public static void HdfsDelete(String fname) {
         try {
-            HashMap<String,Integer> config = readConfigFile("./hagidoop/config/config.txt");
+            HashMap<String,Integer> config = readConfigFile("./config/config.txt");
 
             String[] machines = config.keySet().toArray(new String[0]);
             int[] ports = config.values().stream().mapToInt(Integer::intValue).toArray();
@@ -48,7 +48,7 @@ public class HdfsClient {
 	
 	public static void HdfsWrite(int fmt, String fname) {
 		try {
-            HashMap<String,Integer> config = readConfigFile("./hagidoop/config/config.txt");
+            HashMap<String,Integer> config = readConfigFile("./config/config.txt");
 
             String[] machines = config.keySet().toArray(new String[0]);
             int[] ports = config.values().stream().mapToInt(Integer::intValue).toArray();
@@ -72,6 +72,7 @@ public class HdfsClient {
                     int endOffset = (i+1)*fragmentSize;
     
                     String fragment = content.substring(startOffset, endOffset);
+
                     sendFragment(fragment, fname, fmt, machines[i], ports[i]);
                   }
             } else if (fmt == FileReaderWriterImpl.FMT_KV) {
@@ -91,6 +92,8 @@ public class HdfsClient {
 
                 for (int i = 0; i < numFragments; i++) {  
                     KV fragment = new KV(content.get(i).k, content.get(i).v);
+                    System.out.println(machines[i]);
+                    System.out.println(ports[i]);
                     sendFragment(fragment, fname, fmt, machines[i], ports[i]);
                 }
             } else {
@@ -102,30 +105,35 @@ public class HdfsClient {
 	}
 
     private static void sendFragment(Object fragment, String fname, int fmt, String machine, int port) throws IOException, ClassNotFoundException {
-        Socket socket = new Socket(machine, port);
 
-        ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+        Socket socket = new Socket(machine, port);
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
         //envoi le fragment au serveur
-        ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+        //ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+        //ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
 
         //marqueur pour dire que c'est ecrire
-        String markedFragment = new String("WRITE " + fname + " " + fmt);
-        outputStream.writeObject(markedFragment);
+        String markedFragment = "WRITE " + fname + " " + fmt + "\n" + fragment;
+        System.out.println(markedFragment);
 
-        outputStream.writeObject(fragment);
-        outputStream.flush();
+        out.write(markedFragment);
+        //outputStream.writeObject(markedFragment);
 
-        String response = (String) inputStream.readObject();
-        System.out.println(response);
+        //String response = (String) inputStream.readObject();
+        //System.out.println(response);
 
         // Fermer les flux
-        outputStream.close();
-        inputStream.close();
+        //outputStream.close();
+        //inputStream.close();
+        out.close();
         socket.close();
     }
 
 	//lire mon fichier avec mes machines
+    //TODO
+    //modif a faire si je veux tout executer sur machine perso
+    //je veux pas avoir le meme hote et des ports différents
 	private static HashMap<String, Integer> readConfigFile(String configFilePath) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(new FileReader(configFilePath));
         HashMap<String, Integer> config = new HashMap<String, Integer>();
@@ -146,7 +154,7 @@ public class HdfsClient {
 	public static void HdfsRead(String fname) {
             
         try {
-            HashMap<String,Integer> config = readConfigFile("./hagidoop/config/config.txt");
+            HashMap<String,Integer> config = readConfigFile("./config/config.txt");
 
             String[] machines = config.keySet().toArray(new String[0]);
             int[] ports = config.values().stream().mapToInt(Integer::intValue).toArray();

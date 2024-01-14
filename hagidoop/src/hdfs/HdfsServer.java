@@ -6,6 +6,7 @@ import java.net.*;
 import interfaces.FileReaderWriterImpl;
 import interfaces.KV;
 
+//manque un séparateur sur différent thread
 public class HdfsServer extends Thread {
     private Socket client;
 
@@ -17,12 +18,17 @@ public class HdfsServer extends Thread {
 		try {
             Socket clientSocket = this.client;
 
-            ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
-            ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
-            BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            BufferedReader inputStream = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            PrintWriter outputStream = new PrintWriter(clientSocket.getOutputStream(), true);
 
-            while (true) {
-                String request = reader.readLine();
+            //ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+            //ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
+            //BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            //String request = reader.readLine();
+            
+            String request = inputStream.readLine();
+
+            while (request != null) {
 
                 if (request.startsWith("DELETE")) {
                     String[] tokens = request.split(" ");
@@ -31,16 +37,24 @@ public class HdfsServer extends Thread {
                     //FileReaderWriterImpl file = new FileReaderWriterImpl(fname);
                     //file.delete();
                     String response = fname + " DELETED";
-                    outputStream.writeObject(response);
+                    outputStream.write(response);
                 } else if (request.startsWith("WRITE")) {
+                    //System.out.println(1);
                     String[] tokens = request.split(" ");
                     String fname = tokens[1];
+                    //System.out.println(fname);
                     int fmt = Integer.parseInt(tokens[2]);
+                    //System.out.println(fmt);
 
                     if (fmt == 0) {
                         // Ecrire le fragment sous le format txt
-                        String fragment = inputStream.readObject().toString();
-                        FileReaderWriterImpl file = new FileReaderWriterImpl(fname);
+                        String fragment = "";
+                        String extract;
+                        while ((extract = inputStream.readLine())!=null) {
+                            fragment = fragment + extract;
+                        }
+                        //String fragment = inputStream.readObject().toString();
+                        FileReaderWriterImpl file = new FileReaderWriterImpl("test-server.txt");
                         file.open("w");
                         String[] lines = fragment.split("\n");
 
@@ -48,20 +62,19 @@ public class HdfsServer extends Thread {
                             KV kv = new KV(line, String.valueOf(file.getIndex()));
                             file.write(kv);
                         }
-
                         file.close();
                     } else if (fmt == 1) {
                         // Ecrire le fragment sous le format kv
-                        KV fragment = (KV) inputStream.readObject();
+                        //KV fragment = (KV) inputStream.readObject();
                         FileReaderWriterImpl file = new FileReaderWriterImpl(fname);
                         file.open("w");
-                        file.write(fragment);
+                        //file.write(fragment);
                         file.close();
                     } else {
                         System.out.println("Unknown format: " + fmt);
                     }
                     String response = fname + " WRITTEN";
-                    outputStream.writeObject(response);
+                    outputStream.write(response);
                 } else if (request.startsWith("READ")) {
                     //TODO: Map-Reduce
                     String[] tokens = request.split(" ");
@@ -71,26 +84,28 @@ public class HdfsServer extends Thread {
                     file.open("r");
 
                     String response = "Readind file " + fname + " ...";
-                    outputStream.writeObject(response);
+                    outputStream.write(response);
                     
                     // Lire le fichier fname
                     KV content = file.read();
 
                     while (content != null) {
-                        outputStream.writeObject(content);
+                        //outputStream.write(content);
+                        //erreur ne sait pas write kv
                         content = file.read();
                     }
 
                     content = null;
-                    outputStream.writeObject(content);
+                    //outputStream.write(content);
 
                     String end = "END OF FILE";
-                    outputStream.writeObject(end);
+                    outputStream.write(end);
 
                     file.close();
                 } else {
                     System.out.println("Unknown request: " + request);
                 }
+                request = inputStream.readLine();
             }
 		} catch (Exception ex) {
             ex.printStackTrace();
@@ -99,7 +114,7 @@ public class HdfsServer extends Thread {
 
     public static void main (String args[]) {
 		try {
-			ServerSocket serverSocket = new ServerSocket(8080);
+			ServerSocket serverSocket = new ServerSocket(5002);
 		    while (true) {
 			    Socket clientSocket = serverSocket.accept();
                 HdfsServer hdfsServer = new HdfsServer(clientSocket);
