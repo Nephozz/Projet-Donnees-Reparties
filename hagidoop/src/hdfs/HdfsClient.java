@@ -203,9 +203,9 @@ public class HdfsClient {
 				// à modif si kv ou text traiter les options
                 String option = args[1];
                 int fmt = -1;
-                if (option == "txt") {
+                if (option.equals("txt")) {
                     fmt = FileReaderWriterImpl.FMT_TXT;
-                } else if (option == "kv") {
+                } else if (option.equals("kv")) {
                     fmt = FileReaderWriterImpl.FMT_KV;
                 } else {
                     usage();

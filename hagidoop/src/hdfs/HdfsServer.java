@@ -28,6 +28,8 @@ public class HdfsServer extends Thread {
                     String[] tokens = request.split(" ");
                     String fname = tokens[1];
                     // Supprimer le fichier fname
+                    //FileReaderWriterImpl file = new FileReaderWriterImpl(fname);
+                    //file.delete();
                     String response = fname + " DELETED";
                     outputStream.writeObject(response);
                 } else if (request.startsWith("WRITE")) {
