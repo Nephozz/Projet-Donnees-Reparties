@@ -3,7 +3,7 @@ package hdfs;
 import java.io.*;
 import java.net.*;
 
-import interfaces.FileImpl;
+import interfaces.FileReaderWriterImpl;
 import interfaces.KV;
 
 //modif pour m'adapter au nouveau client
@@ -53,7 +53,7 @@ public class HdfsServer extends Thread {
                             fragment = fragment + "\n" + extract;
                         }
                         //a changer quand yaura plusieurs server mettre nomfichier-numeroduserveur
-                        FileImpl file = new FileImpl("test-server.txt");
+                        FileReaderWriterImpl file = new FileReaderWriterImpl("test-server.txt");
                         file.open("w");
                         String[] lines = fragment.split("\n");
 
@@ -66,7 +66,7 @@ public class HdfsServer extends Thread {
                     } else if (fmt == 1) {
                         // Ecrire le fragment sous le format kv
                         //KV fragment = (KV) inputStream.readObject();
-                        FileImpl file = new FileImpl(fname);
+                        FileReaderWriterImpl file = new FileReaderWriterImpl(fname);
                         file.open("w");
                         //file.write(fragment);
                         file.close();
@@ -81,7 +81,7 @@ public class HdfsServer extends Thread {
                     String[] tokens = request.split(" ");
                     String fname = tokens[1];
 
-                    FileImpl file = new FileImpl(fname);
+                    FileReaderWriterImpl file = new FileReaderWriterImpl(fname);
                     file.open("r");
 
                     //String response = "Readind file " + fname + " ...";

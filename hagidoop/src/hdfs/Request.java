@@ -13,6 +13,8 @@ enum RequestType {
 
 /*
  * Définition d'une requête qui sera envoyée au serveur
+ * Permet de gérer la lecture, l'écriture et la suppression de fichiers
+ * sous la forme de teste ou de KV
  */
 public class Request implements Serializable {
     public RequestType type;
@@ -25,7 +27,10 @@ public class Request implements Serializable {
     // Contenu du fichier à lire/écrire
     public static Object content;
     // Formats autorisés
-    private static final boolean ALLOWED_FORMATS = content instanceof String && content instanceof KV;
+    private static final boolean ALLOWED_FORMATS = 
+        content instanceof String 
+        && content instanceof KV
+        && content instanceof KV[];
 
     public Request() {}
 
@@ -50,7 +55,7 @@ public class Request implements Serializable {
         this.fmt = fmt;
     }
 
-    // Passe le contenu du fichier à lire/écrire
+    // Passe le contenu du fichier à écrire
     public void passContent(Object object) {
         if (this.type != RequestType.WRITE) {
             System.out.println("Cannot set content for non-write request");
@@ -65,7 +70,7 @@ public class Request implements Serializable {
         if (this.fmt == FileReaderWriter.FMT_TXT && !(object instanceof String)) {
             System.out.println("Content must be of type String");
             return;
-        } else if (this.fmt == FileReaderWriter.FMT_KV && !(object instanceof KV)) {
+        } else if (this.fmt == FileReaderWriter.FMT_KV && !(object instanceof KV || object instanceof KV[])) {
             System.out.println("Content must be of type KV");
             return;
         }

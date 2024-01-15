@@ -3,13 +3,13 @@ package interfaces;
 import java.io.*;
 
 //à modif
-public class FileImpl implements FileReaderWriter {
+public class FileReaderWriterImpl implements FileReaderWriter {
     private String fname;
     private int index;
     private boolean closed;
     private String mode;
 
-    public FileImpl(String name) {
+    public FileReaderWriterImpl(String name) {
         this.fname = name;
     }
 
@@ -24,17 +24,14 @@ public class FileImpl implements FileReaderWriter {
         if (this.mode.equals("r")) {
             try (BufferedReader reader = new BufferedReader(new FileReader(this.fname))) {
                 String line = null;
-                int currentLineNumber = 1;
 
                 while ((line = reader.readLine()) != null) {
-                    if (currentLineNumber == this.index) { break;}
-                    currentLineNumber++;
+                    kv.k = String.valueOf(index);
+                    kv.v = line;
+
+                    this.index ++;
                 }
-
-                kv.k = line;
-                kv.v = String.valueOf(index);
-
-                this.index ++;
+                
                 reader.close();
             } catch (Exception e) {
                 e.printStackTrace();

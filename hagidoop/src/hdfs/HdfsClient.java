@@ -2,11 +2,10 @@ package hdfs;
 
 import java.io.*;
 import java.net.*;
-import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 
-import interfaces.FileImpl;
+import interfaces.FileReaderWriterImpl;
 import interfaces.FileReaderWriter;
 import interfaces.KV;
 import hdfs.Request;
@@ -21,20 +20,24 @@ public class HdfsClient {
 		System.out.println("Usage: java HdfsClient write <txt|kv> <file>");
 		System.out.println("Usage: java HdfsClient delete <file>");
 	}
-	
+	/*
+     * HdfsDelete : supprime un fichier sur le HDFS
+     * il le supprime sur chaque machine
+     */
 	public static void HdfsDelete(String fname) {
         try {
             for (int i = 0; i < ports.size(); i++) {
                 Socket socket = new Socket(machines.get(i), ports.get(i));
-                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                String majFname = majFname(fname, i);
-                String request = "DELETE " + majFname;
-				//Request request = new Request(RequestType.DELETE, majFname);
-                out.println(request);
-                out.close();
+                ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+               
+                String majFname = majFname(fname, i);    // Recréer le nom du fichier avec le numéro de fragment
+				Request request = new Request(RequestType.DELETE, majFname);
+
+                outputStream.writeObject(request);
+                outputStream.close();
                 socket.close();
             } 
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 	}
@@ -48,44 +51,42 @@ public class HdfsClient {
             int fragSize = fSize/numFragments;
 
             if (fmt == FileReaderWriter.FMT_TXT) {
-                FileImpl rw = new FileImpl(fname);
-                rw.open("r");
-
-                KV kv;
+                FileReaderWriterImpl readrWriter = new FileReaderWriterImpl(fname);
+                readrWriter.open("r");
 
                 for (int i = 0; i < numFragments; i++) {
                     String majFname = majFname(fname, i);
 
                     Socket socket = new Socket(machines.get(i), ports.get(i));
-                    PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
-                    String content = "";
+                    ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    String content = null;
+                    String line;
 
                     int startOffset = i*fragSize;
                     int endOffset = (i+1)*fragSize;
 
                     for (int j = startOffset; j < endOffset; j++) {
-                        kv = rw.read();
-                        if (kv != null) {
-                            content += kv.toString() + "\n";
+                        line = reader.readLine();
+                        if (line != null) {
+                            content += line + "\n";
                         }
                     }
-                    String request = "WRITE " + majFname + "\n" + content;
-					/*
+
 					Request request = new Request(RequestType.WRITE, majFname);
 					request.setFmt(FileReaderWriter.FMT_TXT);
 					request.passContent(content);
-					*/
-                    writer.println(request);
-                    writer.close();
+
+                    outputStream.writeObject(request);
+                    outputStream.close();
                     socket.close();
                 }
             } else if (fmt == FileReaderWriter.FMT_KV) {
-                FileImpl rw = new FileImpl(fname);
-                rw.open("r");
+                FileReaderWriterImpl readerWriter = new FileReaderWriterImpl(fname);
+                readerWriter.open("r");
                 KV kv;
 
-				// que représente fs ?
-                for (int i = 0; i < fs; i++) {
+                for (int i = 0; i < fSize; i++) {
                     String majFname = majFname(fname, i);
 
                     Socket socket = new Socket(machines.get(i), ports.get(i));
@@ -96,7 +97,7 @@ public class HdfsClient {
                     int endOffset = (i+1)*fragSize;
 
                     for (int j = startOffset; j < endOffset; j++) {
-                        kv = rw.read();
+                        kv = readerWriter.read();
                         if (kv != null) {
                             content += kv.toString() + "\n";
                         }
@@ -126,7 +127,7 @@ public class HdfsClient {
 	public static void HdfsRead(String fname) {
             
         try {
-            FileImpl rw = new FileImpl(fname);
+            FileReaderWriterImpl rw = new FileReaderWriterImpl(fname);
             rw.open("w");
 
             KV kv = new KV();
@@ -163,8 +164,8 @@ public class HdfsClient {
 	// à quoi sert cette méthode ?
     public static String majFname(String fname, int i) {
         int dot = fname.lastIndexOf(".");
-        String name = fname.substring(0, dotIndex);
-        String format = fname.substring(dotIndex);
+        String name = fname.substring(0, dot);
+        String format = fname.substring(dot);
         return  name + "-" + i + format;
     }
     
