@@ -3,13 +3,13 @@ package interfaces;
 import java.io.*;
 
 //à modif
-public class FileImplKv implements FileReaderWriter {
+public class FileImpl implements FileReaderWriter {
     private String fname;
     private int index;
     private boolean closed;
     private String mode;
 
-    public FileReaderWriterImpl(String name) {
+    public FileImpl(String name) {
         this.fname = name;
     }
 
