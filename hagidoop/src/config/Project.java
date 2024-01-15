@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.util.HashMap;
 
 public class Project {
-    public static String PATH = "";
+    public static final String PATH = "";
+    public static final int NRW_PORT = 8000;
+
     public static HashMap<Integer, String> servers = new HashMap<Integer, String>();
 
     public Project() {}

@@ -13,7 +13,15 @@ public class WorkerImpl extends UnicastRemoteObject implements Worker {
     public WorkerImpl() throws RemoteException {}
 
     public void runMap (Map m, FileReaderWriter reader, NetworkReaderWriter writer) throws RemoteException {
-        m.map(reader, writer);
+        try {
+            writer.openServer();
+            reader.open("r");
+            m.map(reader, writer);
+            reader.close();
+            writer.closeServer();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void usage() {

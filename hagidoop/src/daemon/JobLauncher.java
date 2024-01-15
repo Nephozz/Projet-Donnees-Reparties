@@ -16,6 +16,7 @@ public class JobLauncher {
 		Project project = new Project();
 		try {
 			for (Map.Entry<Integer,String> e: project.servers.entrySet()) {
+				// à multi threader
 				WorkerImpl worker = (WorkerImpl) Naming.lookup("rmi://" + e.getValue() + ":" + e.getKey() + "/Worker");
 				worker.runMap(mr, new FileReaderWriter(fname), new NetworkReaderWriter());
 			}
