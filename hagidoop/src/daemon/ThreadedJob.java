@@ -22,7 +22,7 @@ public class ThreadedJob extends Thread {
     public void run() {
         try {
             WorkerImpl worker = (WorkerImpl) Naming.lookup("rmi://" + entry.getValue() + ":" + entry.getKey() + "/Worker");
-            worker.runMap(this.mr, new FileReaderWriter(this.fname), new NetworkReaderWriter());  
+            worker.runMap(this.mr, new FileReaderWriter(this.fname), new NetworkReaderWriter());
         } catch (Exception e) {
             e.printStackTrace();
         }
