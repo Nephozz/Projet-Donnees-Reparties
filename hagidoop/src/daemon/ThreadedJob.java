@@ -2,7 +2,6 @@ package daemon;
 
 import java.util.Map;
 import java.rmi.*;
-import java.net.Socket;
 
 import interfaces.FileReaderWriter;
 import interfaces.MapReduce;
@@ -23,8 +22,7 @@ public class ThreadedJob extends Thread {
     public void run() {
         try {
             WorkerImpl worker = (WorkerImpl) Naming.lookup("rmi://" + entry.getValue() + ":" + entry.getKey() + "/Worker");
-            Socket socket = new Socket();
-            worker.runMap(this.mr, new FileReaderWriter(this.fname), new NetworkReaderWriter(socket));  
+            worker.runMap(this.mr, new FileReaderWriter(this.fname), new NetworkReaderWriter());  
         } catch (Exception e) {
             e.printStackTrace();
         }

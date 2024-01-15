@@ -12,6 +12,8 @@ public class NetworkReaderWriter implements ReaderWriter {
 	private ObjectInputStream inputStream;
 	private ObjectOutputStream outputStream;
 
+	public NetworkReaderWriter() {}
+
 	public NetworkReaderWriter(Socket client) {
 		this.socket = client;
 	}
