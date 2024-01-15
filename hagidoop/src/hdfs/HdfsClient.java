@@ -1,70 +1,164 @@
 package hdfs;
 
+import java.io.*;
+import java.net.*;
+import java.util.List;
+import java.util.ArrayList;
+
+import interfaces.FileReaderWriterImpl;
+import interfaces.FileReaderWriter;
+import interfaces.KV;
+
 public class HdfsClient {
 
-	public static final int FMT_TXT = 0;
-    public static final int FMT_KV = 1;
+    private static List<String> machines = new ArrayList<>();
+    private static List<Integer> ports = new ArrayList<>();
 	
 	private static void usage() {
 		System.out.println("Usage: java HdfsClient read <file>");
 		System.out.println("Usage: java HdfsClient write <txt|kv> <file>");
 		System.out.println("Usage: java HdfsClient delete <file>");
 	}
-	
+	/*
+     * HdfsDelete : supprime un fichier sur le HDFS
+     * il le supprime sur chaque machine
+     */
 	public static void HdfsDelete(String fname) {
+        try {
+            for (int i = 0; i < ports.size(); i++) {
+                Socket socket = new Socket(machines.get(i), ports.get(i));
+                ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+               
+                String majFname = majFname(fname, i);    // Recréer le nom du fichier avec le numéro de fragment
+				Request request = new Request(RequestType.DELETE, majFname);
+
+                outputStream.writeObject(request);
+                outputStream.close();
+                socket.close();
+            } 
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 	}
-	
+	/*
+     * HdfsWrite : écrit un fichier sur le HDFS
+     * il écrit une partie du fichier sur chaque machine
+     */
 	public static void HdfsWrite(int fmt, String fname) {
 		try {
-        	BufferedReader br = new BufferedReader(new FileReader(fname));
-        	StringBuilder content = new StringBuilder();
-        	String line;
+       	 	int numFragments = machines.size();
+            File file = new File(fname);
+            int fSize = (int) file.length();
 
-        	while ((line = br.readLine()) != null) {
-            	content.append(line).append("\n");
-        	}
-        	br.close();
+            int fragSize = fSize/numFragments;
 
-        	String[] machines, ports = readConfigFile("\\wsl.localhost\Ubuntu\home\margaux\hagidoop\config\config.txt");
+            if (fmt == FileReaderWriter.FMT_TXT | fmt == FileReaderWriter.FMT_KV) {
+                FileReaderWriterImpl readerWriter = new FileReaderWriterImpl(fname, fmt);
+                readerWriter.open("r");
+                KV kv;
 
-       	 	int numFragments = machines.length;
-        	int fragmentSize = content.length() / numFragments;
+                for (int i = 0; i < numFragments; i++) {
+                    String majFname = majFname(fname, i);
 
-        	for (int i = 0; i < numFragments; i++) {
-          		int startOffset = i*fragmentSize;
-            	int endOffset = (i+1)*fragmentSize;
+                    Socket socket = new Socket(machines.get(i), ports.get(i));
+                    ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+                    List<KV> content = new ArrayList<>();
 
-            	String fragment = content.substring(startOffset, endOffset);
+                    int startOffset = i*fragSize;
+                    int endOffset = (i+1)*fragSize;
 
-				Socket socket = new Socket(machines[i], ports[i]);
+                    for (int j = startOffset; j < endOffset; j++) {
+                        kv = readerWriter.read();
+                        if (kv != null) {
+                            content.add(kv);
+                        }
+                    }
 
-        		//envoi le fragment au serveur
-        		OutputStream out = socket.getOutputStream();
-        		ObjectOutputStream oout = new ObjectOutputStream(out);
+                    Request request = new Request(RequestType.WRITE, majFname);
+					//request.setFmt(FileReaderWriter.FMT_KV);
+					request.passContent(content);
 
-        		//marqueur pour dire que c'est ecrire
-        		String markedFragment = "1"+fname+"-"+i+" "+fragment;
-
-        		oout.writeObject(markedFragment);
-        		oout.flush();
-
-        		// Fermer les flux
-        		oout.close();
-        		out.close();
-        		socket.close();
-        	}
-		} catch (IOException e) {
+                    outputStream.writeObject(request);
+                    outputStream.close();
+                    socket.close();
+                }
+            } else {
+                System.out.println("Unknown format: " + fmt);
+            }      	
+		} catch (Exception e) {
             e.printStackTrace();
         }
 	}
 
-	//lire mon fichier avec mes machines
-	private static String[] readConfigFile(String configFilePath) throws IOException {
-        return;
-    }
-
+	/*
+	 * HdfsRead : lit un fichier sur le HDFS et le télécharge localement
+	 * il le recupère sous de KV
+	 */
 	public static void HdfsRead(String fname) {
+            
+        try {
+            int fmt = FileReaderWriter.FMT_KV;
+            FileReaderWriterImpl readerWriter = new FileReaderWriterImpl(fname, fmt);
+            readerWriter.open("w");
+
+            for (int i = 0; i < ports.size(); i++) {
+                String majFname = majFname(fname, i);
+
+                Socket socket = new Socket(machines.get(i), ports.get(i));
+                ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+                
+                //j'envoie la requète
+				Request request = new Request(RequestType.READ, majFname);
+                outputStream.writeObject(request);
+                outputStream.close();
+                
+                //je récup le fichier que j'ai demandé
+                ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+                
+                Request receivedRequest = (Request) inputStream.readObject();
+                List<KV> receivedContent = (List<KV>) receivedRequest.content;
+                
+                for (KV kv : receivedContent) {
+                    readerWriter.write(kv);
+                }
+
+                inputStream.close();
+                socket.close();
+            }     	
+            readerWriter.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 	}
+
+	/*
+	 * majFname : rajoute le numéro du fragment après le nom de fichier
+     */
+    public static String majFname(String fname, int i) {
+        int dot = fname.lastIndexOf(".");
+        String name = fname.substring(0, dot);
+        String format = fname.substring(dot);
+        return  name + "-" + i + format;
+    }
+    
+	/*
+	 * readConfigFile : lit le fichier de configuration et remplit les listes machines et ports
+	 */
+	private static void readConfigFile(String configFilePath) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(configFilePath));
+        String line;
+
+        while ((line = reader.readLine()) != null) {
+            if (line.startsWith("#")) { continue; }
+
+            String host = line.split(" ")[0];
+            int port = Integer.parseInt(line.split(" ")[1]);
+            
+            machines.add(host);
+            ports.add(port);
+        }
+        reader.close();
+    }
 
 	public static void main(String[] args) {
 		// java HdfsClient <read|write> <txt|kv> <file>
@@ -74,34 +168,38 @@ public class HdfsClient {
             usage();
             return;
         }
-		///test
+		try {
+			readConfigFile("./config/config.txt");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		
 		String action = args[0];
 
 		switch (action) {
-			case "read":
-				HdfsRead(arg[1]);
-				break;
-			case "write":
-				String format = args[1];
-				int fileFormat;
-				if (format.equals("txt")) {
-                    fileFormat = FMT_TXT;
-                } else if (format.equals("kv")) {
-                    fileFormat = FMT_KV;
+            case "read":
+                HdfsRead(args[1]);
+                break;
+            case "write":
+				// à modif si kv ou text traiter les options
+                String option = args[1];
+                int fmt = -1;
+                if (option.equals("txt")) {
+                    fmt = FileReaderWriter.FMT_TXT;
+                } else if (option.equals("kv")) {
+                    fmt = FileReaderWriter.FMT_KV;
                 } else {
                     usage();
-                    return;
-                } 
-				HdfsWrite(fileFormat, args[2])
-				break;
-			case "delete":
-				HdfsDelete(args[1]);
-				break;
-			default:
-				usage();
-				return;
-		}
+                    System.exit(1);
+                }
+                HdfsWrite(fmt, args[2]);
+                break;
+            case "delete":
+                HdfsDelete(args[1]);
+                break;
+            default:
+                usage();
+                System.exit(1);
+        }
 	}
-	
-} // 300 mo 3 sleve le count 3 sec et avec hagidoop 1300
+}
