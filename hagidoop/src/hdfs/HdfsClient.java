@@ -6,8 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 
-import interfaces.FileReaderWriterImpl;
+import interfaces.FileImpl;
+import interfaces.FileReaderWriter;
 import interfaces.KV;
+import hdfs.Request;
 
 public class HdfsClient {
 
@@ -22,11 +24,12 @@ public class HdfsClient {
 	
 	public static void HdfsDelete(String fname) {
         try {
-            for (int i = 0; i < port.size(); i++) {
+            for (int i = 0; i < ports.size(); i++) {
                 Socket socket = new Socket(machines.get(i), ports.get(i));
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 String majFname = majFname(fname, i);
                 String request = "DELETE " + majFname;
+				//Request request = new Request(RequestType.DELETE, majFname);
                 out.println(request);
                 out.close();
                 socket.close();
@@ -44,16 +47,16 @@ public class HdfsClient {
 
             int fragSize = fSize/numFragments;
 
-            if (fmt == FileReaderWriterImpl.FMT_TXT) {
-                rw = new FileImplTxt(fname);
-                rw.open('r');
+            if (fmt == FileReaderWriter.FMT_TXT) {
+                FileImpl rw = new FileImpl(fname);
+                rw.open("r");
 
                 KV kv;
 
                 for (int i = 0; i < numFragments; i++) {
                     String majFname = majFname(fname, i);
 
-                    Socket socket = new Socket(adress.get(i), port.get(i));
+                    Socket socket = new Socket(machines.get(i), ports.get(i));
                     PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
                     String content = "";
 
@@ -67,19 +70,25 @@ public class HdfsClient {
                         }
                     }
                     String request = "WRITE " + majFname + "\n" + content;
+					/*
+					Request request = new Request(RequestType.WRITE, majFname);
+					request.setFmt(FileReaderWriter.FMT_TXT);
+					request.passContent(content);
+					*/
                     writer.println(request);
                     writer.close();
                     socket.close();
                 }
-            } else if (fmt == FileReaderWriterImpl.FMT_KV) {
-                rw = new FileImplKv(fname);
-                rw.open('r');
+            } else if (fmt == FileReaderWriter.FMT_KV) {
+                FileImpl rw = new FileImpl(fname);
+                rw.open("r");
                 KV kv;
 
+				// que représente fs ?
                 for (int i = 0; i < fs; i++) {
                     String majFname = majFname(fname, i);
 
-                    Socket socket = new Socket(adress.get(i), port.get(i));
+                    Socket socket = new Socket(machines.get(i), ports.get(i));
                     PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
                     String content = "";
 
@@ -93,6 +102,11 @@ public class HdfsClient {
                         }
                     }
                     String request = "WRITE " + majFname + "\n" + content;
+					/*
+					Request request = new Request(RequestType.WRITE, majFname);
+					request.setFmt(FileReaderWriter.FMT_KV);
+					request.passContent(content);
+					*/
                     writer.println(request);
                     writer.close();
                     socket.close();
@@ -105,22 +119,27 @@ public class HdfsClient {
         }
 	}
 
+	/*
+	 * HdfsRead : lit un fichier sur le HDFS et le télécharge localement
+	 * il le recupère sous de KV
+	 */
 	public static void HdfsRead(String fname) {
             
         try {
-            rw = new FileImplTxt(fname);
-            rw.open('w');
+            FileImpl rw = new FileImpl(fname);
+            rw.open("w");
 
-            KV kv;
+            KV kv = new KV();
 
             for (int i = 0; i < ports.size(); i++) {
                 String majFname = majFname(fname, i);
 
-                Socket socket = new Socket(adress.get(i), port.get(i));
+                Socket socket = new Socket(machines.get(i), ports.get(i));
                 PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
                 String request = "READ " + majFname;
+				//Request request = new Request(RequestType.READ, majFname);
                 writer.println(request);
                 writer.flush();
 
@@ -141,13 +160,17 @@ public class HdfsClient {
         }
 	}
 
-    public static String MajFname(String fname, int i) {
-        int dot = fileName.lastIndexOf(".");
-        String name = fileName.substring(0, dotIndex);
-        String format = fileName.substring(dotIndex);
+	// à quoi sert cette méthode ?
+    public static String majFname(String fname, int i) {
+        int dot = fname.lastIndexOf(".");
+        String name = fname.substring(0, dotIndex);
+        String format = fname.substring(dotIndex);
         return  name + "-" + i + format;
     }
     
+	/*
+	 * readConfigFile : lit le fichier de configuration et remplit les listes machines et ports
+	 */
 	private static void readConfigFile(String configFilePath) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(configFilePath));
         String line;
@@ -172,9 +195,13 @@ public class HdfsClient {
             usage();
             return;
         }
+		try {
+			readConfigFile("./config/config.txt");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		
 		String action = args[0];
-        readConfigFile("./config/config.txt");
 
 		switch (action) {
             case "read":
@@ -185,9 +212,9 @@ public class HdfsClient {
                 String option = args[1];
                 int fmt = -1;
                 if (option.equals("txt")) {
-                    fmt = FileReaderWriterImpl.FMT_TXT;
+                    fmt = FileReaderWriter.FMT_TXT;
                 } else if (option.equals("kv")) {
-                    fmt = FileReaderWriterImpl.FMT_KV;
+                    fmt = FileReaderWriter.FMT_KV;
                 } else {
                     usage();
                     System.exit(1);
