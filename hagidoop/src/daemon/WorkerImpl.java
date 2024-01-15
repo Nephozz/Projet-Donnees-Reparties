@@ -16,18 +16,22 @@ public class WorkerImpl extends UnicastRemoteObject implements Worker {
         m.map(reader, writer);
     }
 
+    public void usage() {
+        System.out.println("Usage: java WorkerImpl <host> <port>");
+    }
+
     public static void main(String[] args) {
-        int port = Integer.parseInt(args[0]);
+        String host = args[0];
+        int port = Integer.parseInt(args[1]);
 
         try {
             Registry registry = LocateRegistry.createRegistry(port);
         } catch (Exception e) {
-            System.out.println("Port 8080 is already in use.");
+            System.out.println("Port is already in use.");
         }
         try {
             WorkerImpl worker = new WorkerImpl();
-            Naming.rebind("rmi://localhost:8080/worker", worker);
-            System.out.println("Worker is ready.");
+            Naming.rebind("rmi://" + host + ":" + port + "/Worker", worker);
         } catch (Exception e) {
             e.printStackTrace();
         }
