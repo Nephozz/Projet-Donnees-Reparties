@@ -12,8 +12,8 @@ import interfaces.Map;
 public class WorkerImpl extends UnicastRemoteObject implements Worker {
     public WorkerImpl() throws RemoteException {}
 
-    private void runMap (Map m, FileReaderWriter reader, NetworkReaderWriter writer) throws RemoteException {
-        // TODO
+    public void runMap (Map m, FileReaderWriter reader, NetworkReaderWriter writer) throws RemoteException {
+        m.map(reader, writer);
     }
 
     public static void main(String[] args) {

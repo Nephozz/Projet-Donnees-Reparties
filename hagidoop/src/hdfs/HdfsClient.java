@@ -170,7 +170,7 @@ public class HdfsClient {
 	/*
 	 * readConfigFile : lit le fichier de configuration et remplit les listes machines et ports
 	 */
-	private static void readConfigFile(String configFilePath) throws IOException {
+	public static void readConfigFile(String configFilePath) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(configFilePath));
         String line;
 
