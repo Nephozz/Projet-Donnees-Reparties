@@ -5,10 +5,8 @@ import java.net.*;
 import java.util.List;
 import java.util.ArrayList;
 
-import interfaces.FileReaderWriterImpl;
 import interfaces.FileReaderWriter;
 import interfaces.KV;
-import hdfs.Request;
 
 public class HdfsClient {
 
@@ -51,7 +49,7 @@ public class HdfsClient {
             int fragSize = fSize/numFragments;
 
             if (fmt == FileReaderWriter.FMT_TXT) {
-                FileReaderWriterImpl readrWriter = new FileReaderWriterImpl(fname);
+                FileReaderWriter readrWriter = new FileReaderWriter(fname);
                 readrWriter.open("r");
 
                 for (int i = 0; i < numFragments; i++) {
@@ -82,7 +80,7 @@ public class HdfsClient {
                     socket.close();
                 }
             } else if (fmt == FileReaderWriter.FMT_KV) {
-                FileReaderWriterImpl readerWriter = new FileReaderWriterImpl(fname);
+                FileReaderWriter readerWriter = new FileReaderWriter(fname);
                 readerWriter.open("r");
                 KV kv;
 
@@ -127,8 +125,8 @@ public class HdfsClient {
 	public static void HdfsRead(String fname) {
             
         try {
-            FileReaderWriterImpl rw = new FileReaderWriterImpl(fname);
-            rw.open("w");
+            FileReaderWriter readerWriter = new FileReaderWriter(fname);
+            readerWriter.open("w");
 
             KV kv = new KV();
 
@@ -149,13 +147,13 @@ public class HdfsClient {
                 while ((line = reader.readLine()) != null) {
                     kv.k = line.split(KV.SEPARATOR)[0];
                     kv.v = line.split(KV.SEPARATOR)[1];
-                    rw.write(kv);
+                    readerWriter.write(kv);
                 }
                 writer.close();
                 reader.close();
                 socket.close();
             }     	
-            rw.close();
+            readerWriter.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
