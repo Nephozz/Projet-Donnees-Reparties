@@ -32,6 +32,16 @@ public class WorkerImpl extends UnicastRemoteObject implements Worker {
         String host = args[0];
         int port = Integer.parseInt(args[1]);
 
+        if (args.length != 2) {
+            try {
+                WorkerImpl worker = new WorkerImpl();
+                worker.usage();
+                System.exit(1);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         try {
             Registry registry = LocateRegistry.createRegistry(port);
         } catch (Exception e) {

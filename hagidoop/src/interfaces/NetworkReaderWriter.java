@@ -5,7 +5,7 @@ import java.net.*;
 
 import config.Project;
 
-public class NetworkReaderWriter extends Thread implements ReaderWriter {
+public class NetworkReaderWriter implements ReaderWriter {
 	private ServerSocket serverSocket;
 	private Socket socket;
 
@@ -39,12 +39,12 @@ public class NetworkReaderWriter extends Thread implements ReaderWriter {
 		}
     }
 
-    public void openServer() throws IOException {
-		this.serverSocket = new ServerSocket(Project.NRW_PORT);
+    public void openServer() {
+		this.socket = new Socket();
     }
 
-	public void opensocket() {
-		this.socket = new Socket();
+	public void openSocket()throws IOException {
+		this.serverSocket = new ServerSocket(Project.NRW_PORT);
     }
 
 	public NetworkReaderWriter accept() throws IOException {
@@ -53,10 +53,10 @@ public class NetworkReaderWriter extends Thread implements ReaderWriter {
     }
 
 	public void closeServer() throws IOException {
-		this.serverSocket.close();
+		this.socket.close();
     }
 
-	public void closesocket() throws IOException {
-		this.socket.close();
+	public void closeSocket() throws IOException {
+		this.serverSocket.close();
     }
 }
