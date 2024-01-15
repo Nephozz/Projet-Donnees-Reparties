@@ -6,8 +6,10 @@ import java.io.IOException;
 import java.util.HashMap;
 
 public class Project {
-    public static final String PATH = "";
+    public static String PATH = "";
+
     public static final int NRW_PORT = 8000;
+    public static final int HDFS_PORT = 5002;
 
     public static HashMap<Integer, String> servers = new HashMap<Integer, String>();
 
@@ -30,6 +32,10 @@ public class Project {
         }
         reader.close();
         return servers;
+    }
+
+    public void setPath(String path) {
+        PATH = path;
     }
 
     public static void main(String[] args) {

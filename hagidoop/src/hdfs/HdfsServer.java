@@ -6,9 +6,11 @@ import java.net.*;
 import interfaces.KV;
 import interfaces.FileReaderWriter;
 
+import config.Project;
+
 //modif pour m'adapter au nouveau client
 //manque un séparateur sur différent thread
-public class HdfsServer extends Thread {
+public class HdfsServer implements Runnable {
     private Socket client;
 
     public HdfsServer(Socket s) {
@@ -77,7 +79,7 @@ public class HdfsServer extends Thread {
                     outputStream.write(response);
                 } else if (request.startsWith("READ")) {
                     System.out.println(1);
-                    //TODO: Map-Reduce
+
                     String[] tokens = request.split(" ");
                     String fname = tokens[1];
 
@@ -119,11 +121,10 @@ public class HdfsServer extends Thread {
     public static void main (String args[]) {
 		try {
             //marche que sur le port 5002 a changer !!!!
-			ServerSocket serverSocket = new ServerSocket(5002);
+			ServerSocket serverSocket = new ServerSocket(Project.HDFS_PORT);
+
 		    while (true) {
-			    Socket clientSocket = serverSocket.accept();
-                HdfsServer hdfsServer = new HdfsServer(clientSocket);
-                hdfsServer.start();
+			    new Thread(new HdfsServer(serverSocket.accept()));
 			}
 		} catch (IOException ex) {
 			ex.printStackTrace();

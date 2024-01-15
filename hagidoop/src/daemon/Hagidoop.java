@@ -1,5 +1,5 @@
 package daemon;
 
-public interface Hagidoop {
+public class Hagidoop {
     
 }
