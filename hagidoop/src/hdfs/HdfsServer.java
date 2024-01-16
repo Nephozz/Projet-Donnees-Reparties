@@ -21,102 +21,98 @@ public class HdfsServer implements Runnable {
 		try {
             Socket clientSocket = this.client;
 
-            BufferedReader inputStream = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            PrintWriter outputStream = new PrintWriter(clientSocket.getOutputStream(), true);
-
-            //ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
-            //ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
+            ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+            ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
             //BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            //String request = reader.readLine();
             
-            String request = inputStream.readLine();
-            System.out.println(request);
+            Request request = (Request) inputStream.readObject();
 
             while (request != null) {
+                String fname = request.fname;
+                String response;
 
-                if (request.startsWith("DELETE")) {
-                    String[] tokens = request.split(" ");
-                    String fname = tokens[1];
-                    // Supprimer le fichier fname
-                    File file = new File(fname);
-                    file.delete();
-                    String response = fname + " DELETED";
-                    outputStream.write(response);
-                } else if (request.startsWith("WRITE")) {
-                    String[] tokens = request.split(" ");
-                    String fname = tokens[1];
-                    int fmt = Integer.parseInt(tokens[2]);
+                switch (request.type) {
+                    case RequestType.DELETE:
+                        new File(fname).delete();
 
-                    if (fmt == 0) {
-                        // Ecrire le fragment sous le format txt
-                        String fragment = "";
-                        String extract;
-                        while ((extract = inputStream.readLine())!=null) {
-                            fragment = fragment + "\n" + extract;
+                        response = fname + " DELETED";
+                        outputStream.writeObject(response);   
+                        break;
+                    case RequestType.WRITE:
+                        int fmt = request.fmt;
+
+                        if (fmt == FileReaderWriter.FMT_TXT) {
+                            writeFromTXTFile(request, fname);
+                        } else if (fmt == FileReaderWriter.FMT_KV) {
+                            writeFromKVFile(request, fname);
+                        } else {
+                            System.out.println("Unknown format: " + fmt);
                         }
-                        //a changer quand yaura plusieurs server mettre nomfichier-numeroduserveur
-                        FileReaderWriter file = new FileReaderWriter("test-server.txt");
-                        file.open("w");
-                        String[] lines = fragment.split("\n");
 
-                        for (String line : lines) {
-                            System.out.println(line);
-                            KV kv = new KV(line, String.valueOf(file.getIndex()));
-                            file.write(kv);
-                        }
-                        file.close();
-                    } else if (fmt == 1) {
-                        // Ecrire le fragment sous le format kv
-                        //KV fragment = (KV) inputStream.readObject();
+                        response = fname + " WRITTEN";
+                        outputStream.writeObject(response);
+                        break;
+                    case RequestType.READ:
                         FileReaderWriter file = new FileReaderWriter(fname);
-                        file.open("w");
-                        //file.write(fragment);
+                        file.open("r");
+
+                        response = "Readind file " + fname + " ...";
+                        outputStream.writeObject(response);
+                        
+                        // Lire le fichier fname
+                        KV content = file.read();
+
+                        while (content != null) {
+                            outputStream.writeObject(content);;
+                            //erreur ne sait pas write kv
+                            content = file.read();
+                        }
+
+                        content = null;
+                        outputStream.writeObject(content);
+
+                        String end = "\nEND OF FILE";
+                        outputStream.writeObject(end);
+
                         file.close();
-                    } else {
-                        System.out.println("Unknown format: " + fmt);
-                    }
-                    String response = fname + " WRITTEN";
-                    outputStream.write(response);
-                } else if (request.startsWith("READ")) {
-                    System.out.println(1);
-
-                    String[] tokens = request.split(" ");
-                    String fname = tokens[1];
-
-                    FileReaderWriter file = new FileReaderWriter(fname);
-                    file.open("r");
-
-                    //String response = "Readind file " + fname + " ...";
-                    //outputStream.write(response);
-                    
-                    // Lire le fichier fname
-                    KV content = file.read();
-                    System.out.println(content.k);
-                    content = file.read();
-
-                    while (content.k != null) {
-                        System.out.println(content.k);
-                        outputStream.println(content.toString());
-                        //erreur ne sait pas write kv
-                        content = file.read();
-                    }
-
-                    content = null;
-                    //outputStream.write(content);
-
-                    String end = "END OF FILE";
-                    outputStream.write(end);
-
-                    file.close();
-                } else {
-                    System.out.println("Unknown request: " + request);
+                        break;
+                    default:
+                        System.out.println("Unknown request: " + request);
+                        break;
                 }
-                request = inputStream.readLine();
+                request = (Request) inputStream.readObject();
             }
 		} catch (Exception ex) {
             ex.printStackTrace();
         }
 	}
+
+    private void writeFromTXTFile(Request request, String fname) {
+        FileReaderWriter file = new FileReaderWriter(fname);
+        file.open("w");
+
+        String content = (String) request.content;
+        String[] lines = content.split("\\r?\\n");
+
+        for (String line : lines) {
+            KV kv = new KV(line, String.valueOf(file.getIndex()));
+            file.write(kv);
+        }
+        file.close();
+    }
+
+    private void writeFromKVFile(Request request, String fname) {
+        // Ecrire le fragment sous le format kv
+        FileReaderWriter file = new FileReaderWriter(fname);
+        file.open("w");
+
+        KV[] content = (KV[]) request.content;
+        for (KV kv : content) {
+            file.write(kv);
+        }
+        
+        file.close();
+    }
 
     public static void main (String args[]) {
 		try {

@@ -4,6 +4,9 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class FileReaderWriter implements ReaderWriter {
 	public static final int FMT_TXT = 0;
@@ -12,9 +15,17 @@ public class FileReaderWriter implements ReaderWriter {
     private int index;
     private boolean closed;
     private String mode;
+    private long size;
+    private Path path;
 
     public FileReaderWriter(String name) {
         this.fname = name;
+        this.path = Paths.get(name);
+        try {
+            this.size = Files.lines(this.path).count();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -60,7 +71,8 @@ public class FileReaderWriter implements ReaderWriter {
         if (this.mode.equals("w")) {
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(this.fname, true))) {
                 writer.write(record.k + " " + record.v);
-                index ++;
+                this.size ++;
+                this.index++;
                 writer.close();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -92,5 +104,9 @@ public class FileReaderWriter implements ReaderWriter {
 
     public void setFname(String fname) {
         this.fname = fname;
+    }
+
+    public long size() {
+        return this.size;
     }
 }
