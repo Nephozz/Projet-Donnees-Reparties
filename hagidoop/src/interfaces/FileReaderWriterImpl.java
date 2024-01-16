@@ -10,9 +10,11 @@ public class FileReaderWriterImpl implements FileReaderWriter {
     private String mode;
     private int fmt;
 
+    private BufferedWriter writer;
+    private BufferedReader reader;
+
     public FileReaderWriterImpl(String name, int fmt) {
         this.fname = name;
-        this.index = 1;
         this.fmt = fmt;
     }
 
@@ -25,23 +27,25 @@ public class FileReaderWriterImpl implements FileReaderWriter {
         }
         if (this.mode.equals("r")) {
             try {
-                BufferedReader reader = new BufferedReader(new FileReader(this.fname));
                 String line = null;
 
                 if (this.fmt == FileReaderWriter.FMT_TXT) {
-                    while ((line = reader.readLine()) != null) {
+                    if ((line = reader.readLine()) != null) {
                         kv.k = String.valueOf(index);
                         kv.v = line;
                         this.index ++;
+                    } else {
+                        kv = null;
                     }
                 } else if (this.fmt == FileReaderWriter.FMT_KV) {
-                    while ((line = reader.readLine()) != null) {
+                    if ((line = reader.readLine()) != null) {
                         kv.k = line.split(KV.SEPARATOR)[0];
                         kv.v = line.split(KV.SEPARATOR)[1];
                         this.index ++;
+                    } else {
+                        kv = null;
                     }
                 }
-                reader.close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -63,10 +67,11 @@ public class FileReaderWriterImpl implements FileReaderWriter {
         }
 
         if (this.mode.equals("w")) {
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(this.fname, true))) {
-                writer.write(record.k + " " + record.v);
-                index ++;
-                writer.close();
+            try {
+                if (record != null) {
+                    writer.write(record.k + KV.SEPARATOR + record.v+"\n");
+                    this.index ++;
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -82,11 +87,33 @@ public class FileReaderWriterImpl implements FileReaderWriter {
         this.mode = mode;
         this.index = 0;
         this.closed = false;
+        try {
+            if (mode.equals("r")) {
+                reader = new BufferedReader(new FileReader(this.fname));;
+            } else if (mode.equals("w")) {
+                writer = new BufferedWriter(new FileWriter(this.fname, true));
+            } else {
+                throw new IllegalArgumentException("Invalid mode: " + mode);
+            }
+            index = 0;
+        } catch (IOException e) {
+            System.err.println("Error opening file: " + e.getMessage());
+        }
     }
 
     @Override
     public void close() {
         this.closed = true;
+        try {
+            if (reader != null) {
+                reader.close();
+            }
+            if (writer != null) {
+                writer.close();
+            }
+        } catch (IOException e) {
+            System.err.println("Error closing file: " + e.getMessage());
+        }
     }
 
     @Override

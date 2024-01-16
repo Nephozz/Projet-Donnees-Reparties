@@ -9,7 +9,6 @@ public class HdfsServer {
             System.out.println("Usage: java HdfsServer machine port");
             System.exit(1);
         }
-        String machine = args[0];
         int port = Integer.parseInt(args[1]);
         try {
             ServerSocket serverSocket = new ServerSocket(port);

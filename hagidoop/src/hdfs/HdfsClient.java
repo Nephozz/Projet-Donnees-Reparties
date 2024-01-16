@@ -2,6 +2,7 @@ package hdfs;
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -48,9 +49,9 @@ public class HdfsClient {
 		try {
        	 	int numFragments = machines.size();
             File file = new File(fname);
-            int fSize = (int) file.length();
+            int fSize = Math.toIntExact(Files.lines(file.toPath()).count());
 
-            int fragSize = fSize/numFragments;
+            int fragSize = fSize/numFragments+1;
 
             if (fmt == FileReaderWriter.FMT_TXT | fmt == FileReaderWriter.FMT_KV) {
                 FileReaderWriterImpl readerWriter = new FileReaderWriterImpl(fname, fmt);
@@ -75,7 +76,6 @@ public class HdfsClient {
                     }
 
                     Request request = new Request(RequestType.WRITE, majFname);
-					//request.setFmt(FileReaderWriter.FMT_KV);
 					request.passContent(content);
 
                     outputStream.writeObject(request);
@@ -84,7 +84,7 @@ public class HdfsClient {
                 }
             } else {
                 System.out.println("Unknown format: " + fmt);
-            }      	
+            }    	
 		} catch (Exception e) {
             e.printStackTrace();
         }
@@ -124,7 +124,7 @@ public class HdfsClient {
 
                 inputStream.close();
                 socket.close();
-            }     	
+            }
             readerWriter.close();
         } catch (Exception e) {
             e.printStackTrace();
