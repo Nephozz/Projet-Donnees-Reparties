@@ -4,6 +4,8 @@ import java.io.*;
 import java.net.*;
 
 import interfaces.KV;
+import interfaces.Request;
+import interfaces.RequestType;
 import interfaces.FileReaderWriter;
 
 import config.Project;

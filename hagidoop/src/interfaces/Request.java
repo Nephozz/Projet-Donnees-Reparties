@@ -1,15 +1,6 @@
-package hdfs;
+package interfaces;
 
 import java.io.Serializable;
-import interfaces.KV;
-import interfaces.FileReaderWriter;
-
-/*
- * Défiintion des différents types de requêtes
- */
-enum RequestType {
-    READ, WRITE, DELETE
-}
 
 /*
  * Définition d'une requête qui sera envoyée au serveur

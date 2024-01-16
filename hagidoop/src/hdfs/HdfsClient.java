@@ -10,6 +10,8 @@ import java.util.Map;
 
 import interfaces.FileReaderWriter;
 import interfaces.KV;
+import interfaces.Request;
+import interfaces.RequestType;
 import config.Project;
 
 public class HdfsClient {
