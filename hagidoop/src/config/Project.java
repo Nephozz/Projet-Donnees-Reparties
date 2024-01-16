@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.HashMap;
 
 public class Project {
-    public static String PATH = "";
+    public static String PATH = "/home/nephozz/Documents/Projets-TPs/PDR/hagidoop/config/";
 
     public static final int NRW_PORT = 8000;
     public static final int HDFS_PORT = 5002;
@@ -19,7 +19,7 @@ public class Project {
 	 * readConfigFile : lit le fichier de configuration et remplit les listes machines et ports
 	 */
 	private HashMap<Integer, String> readConfigFile() throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(PATH + "config/config.txt"));
+        BufferedReader reader = new BufferedReader(new FileReader(PATH + "config.txt"));
         String line;
 
         while ((line = reader.readLine()) != null) {

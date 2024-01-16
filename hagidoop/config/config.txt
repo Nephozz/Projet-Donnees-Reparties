@@ -1,4 +1,4 @@
 # host portTCP
-R2D2 5000
-R2D2 5001
-R2D2 5002
+localhost 8000
+localhost 8001
+localhost 8002
