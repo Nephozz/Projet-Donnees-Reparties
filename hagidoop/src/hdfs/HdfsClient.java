@@ -160,6 +160,8 @@ public class HdfsClient {
 				Request request = new Request(RequestType.READ, fragmentName);
                 outputStream.writeObject(request);
 
+                System.out.println(inputStream.readObject());
+
                 KV content = (KV) inputStream.readObject();
 
                 while (content != null) {

@@ -18,7 +18,7 @@ public class Request implements Serializable {
     // Contenu du fichier à lire/écrire
     public Object content;
     // Formats autorisés
-    private final boolean ALLOWED_FORMATS = this.content instanceof String && this.content instanceof KV[];
+    private final boolean ALLOWED_FORMATS = this.content instanceof String && this.content instanceof KV && this.content instanceof KV[];
 
     public Request() {}
 
@@ -58,7 +58,7 @@ public class Request implements Serializable {
         if (this.fmt == FileReaderWriter.FMT_TXT && !(object instanceof String)) {
             System.out.println("Content must be of type String");
             return;
-        } else if (this.fmt == FileReaderWriter.FMT_KV && !(object instanceof KV[])) {
+        } else if (this.fmt == FileReaderWriter.FMT_KV && !(object instanceof KV || object instanceof KV[])) {
             System.out.println("Content must be of type KV");
             return;
         }

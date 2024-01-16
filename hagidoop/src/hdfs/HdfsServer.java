@@ -24,7 +24,6 @@ public class HdfsServer implements Runnable {
 
             ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
             ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
-            //BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             
             Request request = (Request) inputStream.readObject();
 
