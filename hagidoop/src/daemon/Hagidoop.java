@@ -7,5 +7,7 @@ public class Hagidoop {
         Project projet = new Project();
 
         projet.setPath(args[0]);
+
+        // TODO setup le projet
     }
 }

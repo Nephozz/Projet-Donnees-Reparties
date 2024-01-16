@@ -7,6 +7,7 @@ import interfaces.FileReaderWriter;
 import interfaces.MapReduce;
 import interfaces.NetworkReaderWriter;
 
+// Classe permetant de multi-thread le lancement des Workers
 public class ThreadedJob extends Thread {
     private Map.Entry<Integer, String> entry;
     private MapReduce mr;
