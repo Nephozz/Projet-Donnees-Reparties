@@ -9,6 +9,7 @@ import interfaces.FileReaderWriter;
 import interfaces.NetworkReaderWriter;
 import interfaces.Map;
 
+@SuppressWarnings("unused")
 public class WorkerImpl extends UnicastRemoteObject implements Worker {
     public WorkerImpl() throws RemoteException {}
 

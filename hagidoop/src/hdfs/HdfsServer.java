@@ -8,8 +8,7 @@ import interfaces.FileReaderWriter;
 
 import config.Project;
 
-//modif pour m'adapter au nouveau client
-//manque un séparateur sur différent thread
+@SuppressWarnings("resource")
 public class HdfsServer implements Runnable {
     private Socket client;
 
